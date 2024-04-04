@@ -254,7 +254,7 @@ class Interpreter extends Application {
                 $args = new Arguments( $args );
                 $method->runOuter( $args );
             } elseif ( is_string( $method ) ) {
-                $this->$method( $args );
+                $this->$method( $this->newArguments( $args ) );
             }
         } catch ( BadArgumentException $ex ) {
             echo 'ERROR: ', $ex->getMessage(), "\n";
