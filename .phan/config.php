@@ -2,6 +2,7 @@
 
 return [
 
+	'minimum_target_php_version' => '8.2',
 	'target_php_version' => '8.2',
 
 	'directory_list' => [
