@@ -11,6 +11,17 @@ use JDWX\Args\Arguments;
 use LogicException;
 
 
+/**
+ * This class is the base class for all commands.  It provides the basic
+ * structure for a command, including the command name, aliases, help text,
+ * usage text, and options.  It also provides a method for running the command
+ * and supports checking options.
+ *
+ * If you need to handle arguments in a special way (i.e., with a subclass of
+ * Arguments), you should create an abstract subclass of this with its own abstract
+ * run() method with the proper signature.  If not, you can use the Command class
+ * instead.
+ */
 abstract class AbstractCommand {
 
 
