@@ -11,6 +11,7 @@ use JDWX\CLI\Command;
 class MyTestCommand extends Command {
 
 
+    protected const COMMAND = 'my';
     protected const OPTIONS = [ 'foo' => 'foo_default' ];
 
 

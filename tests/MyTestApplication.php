@@ -35,7 +35,7 @@ class MyTestApplication extends Application {
 
 
 
-    public function main() : int {
+    protected function main() : int {
         return 0;
     }
 

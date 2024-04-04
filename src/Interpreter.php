@@ -18,54 +18,28 @@ class Interpreter extends Application {
 
 
     public int $rc;
+
     protected bool $bContinue;
+
     protected array $commands = [];
+
     protected array $help = [];
+
     protected string $stPrompt;
 
 
-    public function __construct( string $i_stPrompt = '> ', array|Arguments|null $i_argv = null,
-                                ?LoggerInterface $i_log = null ) {
+    public function __construct( string           $i_stPrompt = '> ', array|Arguments|null $i_argv = null,
+                                 ?LoggerInterface $i_log = null ) {
         parent::__construct( $i_argv, $i_log );
         $this->stPrompt = $i_stPrompt;
         $this->help = [];
         $this->addCommandClass( CommandEcho::class );
         $this->addCommandClass( CommandExit::class );
         $this->addCommandClass( CommandHelp::class );
-        $fn = function( string $i_stText, int $i_nIndex ) : array {
+        $fn = function ( string $i_stText, int $i_nIndex ) : array {
             return $this->readlineCompletion( $i_stText, $i_nIndex );
         };
         readline_completion_function( $fn );
-    }
-
-
-    protected function addCommand( string  $i_stCommand, string|Command $i_stMethod,
-                                   ?string $i_nstHelp = null,
-                                   ?string $i_nstUsage = null ) : void {
-        if ( is_string( $i_nstUsage ) ) {
-            if ( ! str_starts_with( $i_nstUsage, $i_stCommand ) ) {
-                $i_nstUsage = trim( $i_stCommand . ' ' . $i_nstUsage );
-            }
-        } else {
-            $i_nstUsage = $i_stCommand;
-        }
-
-        if ( ! $i_nstHelp ) {
-            $i_nstHelp = 'No help available.';
-        }
-        $this->commands[ $i_stCommand ] = $i_stMethod;
-        $this->help[ $i_nstUsage ] = $i_nstHelp;
-
-    }
-
-
-    protected function addCommandClass( string $i_stCommandClass ) : void {
-        $cmd = new $i_stCommandClass( $this );
-        assert( $cmd instanceof Command );
-        $this->addCommand( $cmd->getCommand(), $cmd, $cmd->getHelp(), $cmd->getUsage() );
-        foreach ( $cmd->getAliases() as $stAlias ) {
-            $this->addCommand( $stAlias, $cmd, $cmd->getHelp(), $cmd->getUsage() );
-        }
     }
 
 
@@ -78,10 +52,10 @@ class Interpreter extends Application {
     }
 
 
-    /** @noinspection PhpUnusedParameterInspection */
-    public function readlineCompletion( string $i_stText, int $i_nIndex ) : array {
-        $rlInfo = readline_info();
-        assert( is_array( $rlInfo ) );
+    /** @noinspection PhpUnusedParameterInspection The _stText parameter contains only the current word,
+     * which is never useful in command line completion. */
+    public function readlineCompletion( string $_stText, int $i_nIndex ) : array {
+        $rlInfo = $this->readlineInfo();
         $fullInput = trim( substr( $rlInfo[ 'line_buffer' ], 0, $rlInfo[ 'end' ] ) );
         $rMatches = [];
         $rWordMatches = [];
@@ -112,19 +86,67 @@ class Interpreter extends Application {
     }
 
 
-    public function main() : int {
-        $this->rc = 0;
-        $this->bContinue = true;
-        while ( $this->bContinue ) {
-            $str = $this->readLine( $this->stPrompt );
-            if ( false === $str ) {
-                echo "\n";
-                break;
-            }
-            # echo "input = \"", $str, "\"\n";
-            $this->handleInput( $str );
+    protected function readlineInfo() : array {
+        # This prevents readline from ever looking at filenames as an autocomplete option.
+        readline_info( 'attempted_completion_over', 1 );
+        $rlInfo = readline_info();
+        assert( is_array( $rlInfo ) );
+        return $rlInfo;
+    }
+
+
+    public function setContinue( bool $i_bContinue ) : void {
+        $this->bContinue = $i_bContinue;
+    }
+
+
+    public function showHelp( ?array $i_rstCommands = null ) : void {
+        if ( is_null( $i_rstCommands ) ) {
+            $i_rstCommands = array_keys( $this->commands );
         }
-        return $this->rc;
+        $rHelp = [];
+        foreach ( $i_rstCommands as $stCommand ) {
+            foreach ( $this->help as $stUsage => $stHelp ) {
+                if ( str_starts_with( $stUsage, $stCommand ) ) {
+                    $rHelp[ $stUsage ] = $stHelp;
+                }
+            }
+        }
+        $keys = array_keys( $rHelp );
+        sort( $keys );
+        foreach ( $keys as $key ) {
+            echo $key, "\n", str_pad( $rHelp[ $key ], 80, ' ', STR_PAD_LEFT ), "\n";
+        }
+    }
+
+
+    protected function addCommand( string  $i_stCommand, string|Command $i_stMethod,
+                                   ?string $i_nstHelp = null,
+                                   ?string $i_nstUsage = null ) : void {
+        if ( is_string( $i_nstUsage ) ) {
+            if ( ! str_starts_with( $i_nstUsage, $i_stCommand ) ) {
+                $i_nstUsage = trim( $i_stCommand . ' ' . $i_nstUsage );
+            }
+        } else {
+            $i_nstUsage = $i_stCommand;
+        }
+
+        if ( ! $i_nstHelp ) {
+            $i_nstHelp = 'No help available.';
+        }
+        $this->commands[ $i_stCommand ] = $i_stMethod;
+        $this->help[ $i_nstUsage ] = $i_nstHelp;
+
+    }
+
+
+    protected function addCommandClass( string $i_stCommandClass ) : void {
+        $cmd = new $i_stCommandClass( $this );
+        assert( $cmd instanceof Command );
+        $this->addCommand( $cmd->getCommand(), $cmd, $cmd->getHelp(), $cmd->getUsage() );
+        foreach ( $cmd->getAliases() as $stAlias ) {
+            $this->addCommand( $stAlias, $cmd, $cmd->getHelp(), $cmd->getUsage() );
+        }
     }
 
 
@@ -176,10 +198,15 @@ class Interpreter extends Application {
             }
             if ( count( $rNewMatches ) === 1 ) {
                 $rMatches = $rNewMatches;
-            } else {
+            } elseif ( count( $rNewMatches ) > 1 ) {
                 echo 'Ambiguous command: ', $st, " (", count( $rNewMatches ), ")\n";
                 echo "Matches: ", join( " ", array_keys( $rNewMatches ) ), "\n";
                 $this->showHelp( array_keys( $rNewMatches ) );
+                return;
+            } else {
+                echo 'Ambiguous command: ', $st, " (", count( $rMatches ), ")\n";
+                echo "Matches: ", join( " ", array_keys( $rMatches ) ), "\n";
+                $this->showHelp( array_keys( $rMatches ) );
                 return;
             }
         }
@@ -232,33 +259,27 @@ class Interpreter extends Application {
     }
 
 
-    protected function readLine() : bool|string {
-        return readline( $this->stPrompt );
-    }
-
-
-    public function setContinue( bool $i_bContinue ) : void {
-        $this->bContinue = $i_bContinue;
-    }
-
-
-    public function showHelp( ?array $i_rstCommands = null ) : void {
-        if ( is_null( $i_rstCommands ) ) {
-            $i_rstCommands = array_keys( $this->commands );
-        }
-        $rHelp = [];
-        foreach ( $i_rstCommands as $stCommand ) {
-            foreach ( $this->help as $stUsage => $stHelp ) {
-                if ( str_starts_with( $stUsage, $stCommand ) ) {
-                    $rHelp[ $stUsage ] = $stHelp;
-                }
+    protected function main() : int {
+        $this->rc = 0;
+        $this->bContinue = true;
+        while ( $this->bContinue ) {
+            $str = $this->readLine();
+            if ( false === $str ) {
+                echo "\n";
+                break;
             }
+            # echo "input = \"", $str, "\"\n";
+            $this->handleInput( $str );
         }
-        $keys = array_keys( $rHelp );
-        sort( $keys );
-        foreach ( $keys as $key ) {
-            echo $key, "\n", str_pad( $rHelp[ $key ], 80, ' ', STR_PAD_LEFT ), "\n";
+        return $this->rc;
+    }
+
+
+    protected function readLine( ?string $i_nstPrompt = null ) : bool|string {
+        if ( is_null( $i_nstPrompt ) ) {
+            $i_nstPrompt = $this->stPrompt;
         }
+        return readline( $i_nstPrompt );
     }
 
 

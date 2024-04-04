@@ -122,14 +122,14 @@ abstract class Application {
     }
 
 
-    public function log( int $i_iPrio, string $i_stMessage, array $i_rContext = [] ) : void {
+    public function log( int $i_iPriority, string $i_stMessage, array $i_rContext = [] ) : void {
         if ( ! $this->log instanceof LoggerInterface ) {
             return;
         }
-        if ( LOG_DEBUG === $i_iPrio && ! $this->bDebug ) {
+        if ( LOG_DEBUG === $i_iPriority && ! $this->bDebug ) {
             return;
         }
-        $this->log->log( $i_iPrio, $i_stMessage, $i_rContext );
+        $this->log->log( $i_iPriority, $i_stMessage, $i_rContext );
     }
 
 
@@ -153,7 +153,7 @@ abstract class Application {
     }
 
 
-    abstract public function main() : int;
+    abstract protected function main() : int;
 
 
     protected function newArguments( ?array $i_argv ) : Arguments {

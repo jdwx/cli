@@ -19,7 +19,7 @@ abstract class Command {
     protected const HELP = null;
     protected const USAGE = null;
     protected const OPTIONS = [
-        /** If options are used they are of the form "key" => "defaultvalue". */
+        /** If options are used they are of the form "key" => "default_value". */
     ];
 
 

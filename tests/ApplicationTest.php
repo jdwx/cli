@@ -76,10 +76,21 @@ class ApplicationTest extends TestCase {
         $log = new MyTestLogger();
         $app = new MyTestApplication([ 'test/command', '--debug=yes' ], $log );
         $app->run();
-        $app->logDebug( 'TEST_MESSAGE' );
+        $app->logDebug( 'TEST_MESSAGE_DEBUG' );
         self::assertSame( LOG_DEBUG, $log->level );
-        self::assertSame( 'TEST_MESSAGE', $log->message );
+        self::assertSame( 'TEST_MESSAGE_DEBUG', $log->message );
         self::assertSame( [], $log->context );
+    }
+
+
+    public function testLogInfo() : void {
+        $log = new MyTestLogger();
+        $app = new MyTestApplication([ 'test/command' ], $log );
+        $rContext = [ 'foo' => 'bar' ];
+        $app->logInfo( 'TEST_MESSAGE_INFO', $rContext );
+        self::assertSame( LOG_INFO, $log->level );
+        self::assertSame( 'TEST_MESSAGE_INFO', $log->message );
+        self::assertSame( $rContext, $log->context );
     }
 
 
