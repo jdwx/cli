@@ -252,7 +252,7 @@ class Interpreter extends Application {
                     return;
                 }
                 $args = new Arguments( $args );
-                $method->run( $args );
+                $method->runOuter( $args );
             } elseif ( is_string( $method ) ) {
                 $this->$method( $args );
             }

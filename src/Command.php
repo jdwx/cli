@@ -85,7 +85,14 @@ abstract class Command {
     }
 
 
-    abstract public function run( Arguments $args ) : void;
+    /**
+     * @suppress PhanUndeclaredMethod The run() method must exist, but we can't specify the
+     * type of its argument. Users will frequently want to use a specific subclass of Arguments.
+     */
+    public function runOuter( Arguments $args ) : void {
+        assert( method_exists( $this, "run" ), "Command " . static::COMMAND . " has no run method." );
+        $this->run( $args );
+    }
 
 
     protected function cli() : Interpreter {
