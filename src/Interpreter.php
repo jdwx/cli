@@ -10,6 +10,7 @@ use JDWX\Args\Arguments;
 use JDWX\Args\BadArgumentException;
 use JDWX\CLI\Commands\CommandEcho;
 use JDWX\CLI\Commands\CommandExit;
+use JDWX\CLI\Commands\CommandExpr;
 use JDWX\CLI\Commands\CommandHelp;
 use Psr\Log\LoggerInterface;
 
@@ -35,6 +36,7 @@ class Interpreter extends Application {
         $this->help = [];
         $this->addCommandClass( CommandEcho::class );
         $this->addCommandClass( CommandExit::class );
+        $this->addCommandClass( CommandExpr::class );
         $this->addCommandClass( CommandHelp::class );
         $fn = function ( string $i_stText, int $i_nIndex ) : array {
             return $this->readlineCompletion( $i_stText, $i_nIndex );
@@ -152,22 +154,26 @@ class Interpreter extends Application {
 
     protected function handleCommand( string $st ) : void {
 
-        $st = trim( preg_replace( "/[ \t][ \t]+/", " ", $st ) );
-        if ( str_starts_with( $st, '#' ) ) return;
-        $args = explode( ' ', $st );
+        $args = self::parseLine( $st );
+        if ( ! is_array( $args ) ) {
+            $this->logError( $args );
+            return;
+        }
         $argc = count( $args );
+        if ( 0 == $argc ) return;
+        $this->logDebug( "parsed line = " . json_encode( $args ) );
 
         $rMatches = $this->commands;
         foreach ( $args as $ii => $argInput ) {
             $rNewMatches = [];
             foreach ( $rMatches as $stCommand => $stMethod ) {
-                $x = explode( ' ', $stCommand );
-                if ( $ii >= count( $x ) ) {
+                $rCommand = preg_split( '/\s+/', $stCommand );
+                if ( $ii >= count( $rCommand ) ) {
                     // echo $ii, ". ", $stCommand, " <=> ", $argInput, " (length)\n";
                     $rNewMatches[ $stCommand ] = $stMethod;
                     continue;
                 }
-                $argCommand = $x[ $ii ];
+                $argCommand = $rCommand[ $ii ];
                 if ( str_starts_with( $argCommand, $argInput ) ) {
                     // echo $ii, ". ", $argCommand, " <=> ", $argInput, " (match)\n";
                     $rNewMatches[ $stCommand ] = $stMethod;
@@ -181,32 +187,49 @@ class Interpreter extends Application {
             }
             $rMatches = $rNewMatches;
         }
+        $this->logDebug( "Matches: " . json_encode( array_keys( $rMatches ) ) );
 
+        # If we have more than one match, we can try to winnow it down by looking at which command(s)
+        # match the most components of the input.
         if ( count( $rMatches ) > 1 ) {
             $rNewMatches = [];
             $uMaxMatchLen = 0;
             foreach ( $rMatches as $stCommand => $stMethod ) {
-                if ( str_starts_with( $st, $stCommand ) ) {
-                    $uMatchLen = strlen( $stCommand );
-                    if ( $uMatchLen < $uMaxMatchLen ) continue;
-                    if ( $uMatchLen > $uMaxMatchLen ) {
-                        $uMaxMatchLen = $uMatchLen;
-                        $rNewMatches = [];
-                    }
-                    $rNewMatches[ $stCommand ] = $stMethod;
+                $rCommand = preg_split( '/\s+/', $stCommand );
+                if ( count ( $rCommand ) == $argc ) {
+                    # An exact match should always win over a longer inexact match.
+                    $uMatchLen = 1_000_000;
+                } else {
+                    # Otherwise, the more components of the command that match the input, the better.
+                    $uMatchLen = min( count( $rCommand ), $argc );
                 }
+                if ( $uMatchLen < $uMaxMatchLen ) continue;
+                if ( $uMatchLen > $uMaxMatchLen ) {
+                    $uMaxMatchLen = $uMatchLen;
+                    $rNewMatches = [];
+                }
+                $rNewMatches[ $stCommand ] = $stMethod;
+                // echo "Match: ", $stCommand, " (", $uMatchLen, ")\n";
             }
+            $this->logDebug( "Winnowed matches: " . json_encode( array_keys( $rNewMatches ) ) );
             if ( count( $rNewMatches ) === 1 ) {
+                # This handles the case where two commands match but one is objectively longer.
+                # E.g., if you have commands "go" and "go hard" and you enter "go hard" we should
+                # match "go hard" but not "go".
                 $rMatches = $rNewMatches;
             } elseif ( count( $rNewMatches ) > 1 ) {
-                echo 'Ambiguous command: ', $st, " (", count( $rNewMatches ), ")\n";
-                echo "Matches: ", join( " ", array_keys( $rNewMatches ) ), "\n";
+                # This handles the case where what you've entered matches two or more commands
+                # to an equal amount. E.g., if you have commands "go fish" and "go hard" and you enter
+                # "go" we show you your options.
+                $this->logWarning( "Ambiguous command: {$st}" );
+                $this->logDebug( "Matches: " . json_encode( array_keys( $rNewMatches ) ) );
                 $this->showHelp( array_keys( $rNewMatches ) );
                 return;
             } else {
-                echo 'Ambiguous command: ', $st, " (", count( $rMatches ), ")\n";
-                echo "Matches: ", join( " ", array_keys( $rMatches ) ), "\n";
-                $this->showHelp( array_keys( $rMatches ) );
+                # This handles the case where what you've entered doesn't match any commands.
+                # This shouldn't be reachable anymore, but it's hard to be sure, so we'll watch
+                # for this message.
+                $this->logError( "Command winnowing failed: {$st}" );
                 return;
             }
         }
@@ -214,13 +237,13 @@ class Interpreter extends Application {
 
         $match = array_key_first( $rMatches );
         $method = array_shift( $rMatches );
-        $x = explode( ' ', $match );
+        $rCommand = explode( ' ', $match );
         // echo "Matched: ", $match, " (", count( $x ), " with ", $st, " (", $argc, ")\n";
-        if ( count( $x ) > $argc ) {
+        if ( count( $rCommand ) > $argc ) {
             $this->showHelp( [ $match ] );
             return;
         }
-        $args = array_slice( $args, count( $x ) );
+        $args = array_slice( $args, count( $rCommand ) );
 
         try {
             if ( $method instanceof Command ) {
@@ -246,6 +269,7 @@ class Interpreter extends Application {
     }
 
 
+    /** An input might be multiline. Sometimes readline does that if you paste multiline content. */
     protected function handleInput( string $stInput ) : void {
         foreach ( explode( "\n", $stInput ) as $line ) {
             $line = trim( $line );
@@ -272,6 +296,73 @@ class Interpreter extends Application {
             $this->handleInput( $str );
         }
         return $this->rc;
+    }
+
+
+    public static function parseQuote( string $i_st, string $i_stQuoteCharacter ) : array|string {
+        $stOut = "";
+        $stRest = $i_st;
+        while ( true ) {
+            $iSpan = strpos( $stRest, $i_stQuoteCharacter );
+            if ( false === $iSpan ) {
+                return "Unmatched {$i_stQuoteCharacter}.";
+            }
+            if ( $iSpan > 0 && substr( $stRest, $iSpan - 1, 1 ) === "\\" ) {
+                $stOut .= substr( $stRest, 0, $iSpan - 1 ) . $i_stQuoteCharacter;
+                $stRest = substr( $stRest, $iSpan + 1 );
+                continue;
+            }
+            $stOut .= substr( $stRest, 0, $iSpan );
+            $stRest = substr( $stRest, $iSpan + 1 );
+            return [ $stOut, $stRest ];
+        }
+    }
+
+
+    public static function parseLine( string $i_stLine ) : array|string {
+        $st = trim( preg_replace( "/\s\s+/", " ", $i_stLine ) );
+        $rOut = [];
+        $stSpan = "";
+        while ( $st !== "" ) {
+            $iSpan = strcspn( $st, " \"'#`" );
+            $stSpan .= substr( $st, 0, $iSpan );
+            $ch = substr( $st, $iSpan, 1 );
+            $stRest = substr( $st, $iSpan + 1 );
+            // echo $stSpan, "|", $ch, "|", $stRest, "\n";
+            if ( ' ' === $ch || '' === $ch ) {
+                if ( $stSpan ) {
+                    $rOut[] = $stSpan;
+                    $stSpan = "";
+                }
+            } elseif ( '"' == $ch ) {
+                $r = self::parseQuote( $stRest, '"' );
+                if ( is_string( $r ) ) {
+                    return $r;
+                }
+                $stSpan .= $r[ 0 ];
+                $stRest = $r[ 1 ];
+            } elseif ( "'" == $ch ) {
+                $r = self::parseQuote( $stRest, '\'' );
+                if ( is_string( $r ) ) {
+                    return $r;
+                }
+                $stSpan .= $r[ 0 ];
+                $stRest = $r[ 1 ];
+            } elseif ( "`" === $ch ) {
+                $r = self::parseQuote( $stRest, '`' );
+                if ( is_string( $r ) ) {
+                    return $r;
+                }
+                $stSpan .= $r[ 0 ];
+                $stRest = $r[ 1 ];
+            }
+            $st = $stRest;
+        }
+        if ( $stSpan ) {
+            $rOut[] = $stSpan;
+        }
+        return $rOut;
+
     }
 
 

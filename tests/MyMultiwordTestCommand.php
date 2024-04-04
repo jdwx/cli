@@ -4,13 +4,17 @@
 declare( strict_types = 1 );
 
 
-class MyMultiwordTestCommand extends \JDWX\CLI\Command {
+use JDWX\Args\Arguments;
+use JDWX\CLI\Command;
+
+
+class MyMultiwordTestCommand extends Command {
 
 
     protected const COMMAND = 'my multiword test command';
 
 
-    public function run( \JDWX\Args\Arguments $args ) : void {
+    public function run( Arguments $args ) : void {
         $args->end();
     }
 

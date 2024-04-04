@@ -7,6 +7,10 @@ declare( strict_types = 1 );
 use PHPUnit\Framework\TestCase;
 
 
+require_once __DIR__ . '/MyTestInterpreter.php';
+require_once __DIR__ . '/MyTestLogger.php';
+
+
 class InterpreterTest extends TestCase {
 
 
@@ -35,9 +39,10 @@ class InterpreterTest extends TestCase {
         $cli->lineBuffer = "e";
         $cli->end = strlen( $cli->lineBuffer );
         $r = $cli->readlineCompletion( "unused", 0 );
-        self::assertCount( 2, $r );
+        self::assertCount( 3, $r );
         self::assertSame( "echo", $r[ 0 ] );
         self::assertSame( "exit", $r[ 1 ] );
+        self::assertSame( "expr", $r[ 2 ] );
     }
 
 
@@ -61,12 +66,14 @@ class InterpreterTest extends TestCase {
 
 
     public function testRunForAmbiguous() : void {
-        $cli = new MyTestInterpreter();
+        $log = new MyTestLogger();
+        $cli = new MyTestInterpreter( i_log: $log );
         $cli->readLines = [ "e" ];
         ob_start();
         $cli->run();
-        $st = ob_get_clean();
-        self::assertStringContainsString( 'Ambiguous command: e (2)', $st );
+        ob_end_clean();
+        self::assertSame( LOG_WARNING, $log->level );
+        self::assertStringContainsString( 'Ambiguous', $log->message );
     }
 
 
