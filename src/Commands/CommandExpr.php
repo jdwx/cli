@@ -19,7 +19,7 @@ class CommandExpr extends Command {
     protected const USAGE = 'expr <number> <operator> <number>';
 
 
-    public function run( Arguments $args ) : void {
+    protected function run( Arguments $args ) : void {
         $f1 = $args->shiftFloatEx();
         $rOperators = [ "+", "-", "*", "/" ];
         $op = $args->shiftKeywordEx( $rOperators );

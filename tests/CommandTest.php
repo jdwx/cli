@@ -31,17 +31,17 @@ class CommandTest extends TestCase {
 
         $args = new Arguments([]);
         $command = new MyTestCommand( $cli );
-        $command->run( $args );
+        $command->runOuter( $args );
         self::assertTrue( $command->checkOptionRelay( 'foo', 'foo_default' ) );
 
         $args = new Arguments( [ '--foo' ] );
         $command = new MyTestCommand( $cli );
-        $command->run( $args );
+        $command->runOuter( $args );
         self::assertTrue( $command->checkOptionRelay( 'foo', true ) );
 
         $args = new Arguments( [ '--foo=bar' ] );
         $command = new MyTestCommand( $cli );
-        $command->run( $args );
+        $command->runOuter( $args );
         self::assertTrue( $command->checkOptionRelay( 'foo', 'bar' ) );
     }
 
@@ -66,7 +66,7 @@ class CommandTest extends TestCase {
         $cli = new MyTestInterpreter();
         $command = new MyTestCommand( $cli );
         $args = new Arguments([ 'foo', 'bar' ]);
-        $command->run( $args );
+        $command->runOuter( $args );
         self::assertSame( $args, $command->args );
     }
 

@@ -23,7 +23,7 @@ class MyTestCommand extends Command {
     }
 
 
-    public function run( Arguments $args ) : void {
+    protected function run( Arguments $args ) : void {
         $this->handleOptions( $args );
         $this->args = $args;
     }

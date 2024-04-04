@@ -19,7 +19,7 @@ class CommandHelp extends Command {
     protected const USAGE = "help [command...]";
 
 
-    public function run( Arguments $args ) : void {
+    protected function run( Arguments $args ) : void {
         if ( $args->empty() ) {
             $this->cli()->showHelp();
             return;

@@ -14,7 +14,7 @@ class MyMultiwordTestCommand extends Command {
     protected const COMMAND = 'my multiword test command';
 
 
-    public function run( Arguments $args ) : void {
+    protected function run( Arguments $args ) : void {
         $args->end();
     }
 

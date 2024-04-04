@@ -19,7 +19,7 @@ class CommandExit extends Command {
     protected const HELP = "Exit the program.";
 
 
-    public function run( Arguments $args ) : void {
+    protected function run( Arguments $args ) : void {
         $args->end();
         $this->cli()->setContinue( false );
     }

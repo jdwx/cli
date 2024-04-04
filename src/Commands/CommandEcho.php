@@ -19,7 +19,7 @@ class CommandEcho extends Command {
     protected const USAGE = "echo <string>";
 
 
-    public function run( Arguments $args ) : void {
+    protected function run( Arguments $args ) : void {
         $st = $args->endWithString();
         echo $st, "\n";
     }

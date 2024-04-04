@@ -19,7 +19,7 @@ class CommandEchoError extends Command {
     protected const USAGE = 'echo error <string...>';
 
 
-    public function run( Arguments $args ) : void {
+    protected function run( Arguments $args ) : void {
         $st = $args->endWithString();
         error_log( $st );
     }
