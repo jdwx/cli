@@ -132,7 +132,7 @@ class Interpreter extends Application {
     }
 
 
-    protected function addCommand( string  $i_stCommand, string|Command $i_stMethod,
+    protected function addCommand( string  $i_stCommand, string|AbstractCommand $i_stMethod,
                                    ?string $i_nstHelp = null,
                                    ?string $i_nstUsage = null ) : void {
         if ( is_string( $i_nstUsage ) ) {
@@ -154,7 +154,7 @@ class Interpreter extends Application {
 
     protected function addCommandClass( string $i_stCommandClass ) : void {
         $cmd = new $i_stCommandClass( $this );
-        assert( $cmd instanceof Command );
+        assert( $cmd instanceof AbstractCommand );
         $this->addCommand( $cmd->getCommand(), $cmd, $cmd->getHelp(), $cmd->getUsage() );
         foreach ( $cmd->getAliases() as $stAlias ) {
             $this->addCommand( $stAlias, $cmd, $cmd->getHelp(), $cmd->getUsage() );
