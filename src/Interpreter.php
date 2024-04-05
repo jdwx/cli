@@ -208,7 +208,7 @@ class Interpreter extends Application {
         }
         $args = $this->newArguments( $args );
         try {
-            if ( $method instanceof Command ) {
+            if ( $method instanceof AbstractCommand ) {
                 $method->runOuter( $args );
                 return;
             }
