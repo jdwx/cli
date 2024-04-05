@@ -5,10 +5,10 @@ declare( strict_types = 1 );
 
 
 use JDWX\Args\Arguments;
-use JDWX\CLI\Command;
+use JDWX\CLI\AbstractCommand;
 
 
-class MyMultiwordTestCommand extends Command {
+class MyMultiwordTestCommand extends AbstractCommand {
 
 
     protected const COMMAND = 'my multiword test command';
