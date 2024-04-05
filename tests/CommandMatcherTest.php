@@ -73,4 +73,13 @@ class CommandMatcherTest extends TestCase {
     }
 
 
+    public function testWinnowForAmbiguousWithArgs() : void {
+        $rInput = [ 'foo', 'ba', 'qux' ];
+        $rCommands = [ 'foo', 'foo baz', 'foo baz zok' ];
+        $rExpected = [ 'foo baz' ];
+        $rActual = CommandMatcher::winnow( $rInput, $rCommands );
+        self::assertEquals( $rExpected, $rActual );
+    }
+
+
 }

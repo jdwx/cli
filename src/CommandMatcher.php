@@ -69,8 +69,8 @@ final class CommandMatcher {
                 return $uMatchLen;
             }
             if ( ! str_starts_with( $i_rCommand[ $ii ], $i_rInput[ $ii ] ) ) {
-                # If the command doesn't start with the input, we're done.
-                return $uMatchLen;
+                # If the command doesn't start with the input, it can't be right.
+                return 0;
             }
             if ( $i_rInput[ $ii ] === $i_rCommand[ $ii ] ) {
                 # If this component of the input and command are identical, award an extra point.
