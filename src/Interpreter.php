@@ -206,7 +206,7 @@ class Interpreter extends Application {
             $this->showHelp( [ $stCommand ] );
             return;
         }
-        $args = new Arguments( $args );
+        $args = $this->newArguments( $args );
         try {
             if ( $method instanceof Command ) {
                 $method->runOuter( $args );
