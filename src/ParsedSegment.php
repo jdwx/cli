@@ -26,7 +26,7 @@ class ParsedSegment {
     }
 
 
-    public function substBackQuotes( Interpreter $i_cli ) : void {
+    public function substBackQuotes( BaseInterpreter $i_cli ) : void {
         if ( Segment::BACK_QUOTED !== $this->type ) {
             return;
         }
