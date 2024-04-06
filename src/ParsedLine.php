@@ -50,6 +50,13 @@ class ParsedLine {
     }
 
 
+    public function substBackQuotes( Interpreter $i_cli ) : void {
+        foreach ( $this->rSegments as $seg ) {
+            $seg->substBackQuotes( $i_cli );
+        }
+    }
+
+
     public function substEscapeSequences() : void {
         foreach ( $this->rSegments as $seg ) {
             $seg->substEscapeSequences();

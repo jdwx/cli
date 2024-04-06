@@ -162,22 +162,23 @@ class Interpreter extends Application {
     }
 
 
-    protected function handleCommand( string $st ) : void {
+    public function handleCommand( string $st ) : void {
 
-        $argx = LineParser::parseLine( $st );
-        if ( ! $argx instanceof ParsedLine ) {
-            $this->logError( $argx );
+        $rInput = LineParser::parseLine( $st );
+        if ( ! $rInput instanceof ParsedLine ) {
+            $this->logError( $rInput );
             return;
         }
 
-        $bst = $argx->substVariables( $this->rVariables );
+        $bst = $rInput->substVariables( $this->rVariables );
         if ( is_string( $bst ) ) {
             $this->logError( $bst );
             return;
         }
-        $argx->substEscapeSequences();
+        $rInput->substEscapeSequences();
+        $rInput->substBackQuotes( $this );
 
-        $args = $argx->getSegments();
+        $args = $rInput->getSegments();
 
         $rMatches = CommandMatcher::match( $args, array_keys( $this->commands ) );
         $this->logDebug( "matches = " . json_encode( $rMatches ) );
@@ -200,7 +201,7 @@ class Interpreter extends Application {
         }
         $stCommand = array_shift( $rMatches );
         $method = $this->commands[ $stCommand ];
-        $args = $argx->getSegments();
+        $args = $rInput->getSegments();
         $args = array_slice( $args, count( explode( ' ', $stCommand ) ) );
         if ( [ "?" ] == $args ) {
             $this->showHelp( [ $stCommand ] );

@@ -7,19 +7,6 @@ declare( strict_types = 1 );
 namespace JDWX\CLI;
 
 
-enum Segment {
-
-
-    case DELIMITER;
-    case UNQUOTED;
-    case SINGLE_QUOTED;
-    case DOUBLE_QUOTED;
-    case BACK_QUOTED;
-
-
-}
-
-
 class ParsedSegment {
 
 
@@ -36,6 +23,16 @@ class ParsedSegment {
 
     public function isDelimiter() : bool {
         return Segment::DELIMITER === $this->type;
+    }
+
+
+    public function substBackQuotes( Interpreter $i_cli ) : void {
+        if ( Segment::BACK_QUOTED !== $this->type ) {
+            return;
+        }
+        ob_start();
+        $i_cli->handleCommand( $this->text );
+        $this->text = trim( ob_get_clean() );
     }
 
 
