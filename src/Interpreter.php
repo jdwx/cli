@@ -9,6 +9,9 @@ use JDWX\CLI\Commands\CommandEcho;
 use JDWX\CLI\Commands\CommandExit;
 use JDWX\CLI\Commands\CommandExpr;
 use JDWX\CLI\Commands\CommandHelp;
+use JDWX\CLI\Commands\CommandHistory;
+use JDWX\CLI\Commands\CommandHistoryRun;
+use JDWX\CLI\Commands\CommandHistorySearch;
 use JDWX\CLI\Commands\CommandSet;
 use Psr\Log\LoggerInterface;
 
@@ -27,6 +30,9 @@ class Interpreter extends BaseInterpreter {
         $this->addCommandClass( CommandExit::class );
         $this->addCommandClass( CommandExpr::class );
         $this->addCommandClass( CommandHelp::class );
+        $this->addCommandClass( CommandHistory::class );
+        $this->addCommandClass( CommandHistoryRun::class );
+        $this->addCommandClass( CommandHistorySearch::class );
         $this->addCommandClass( CommandSet::class );
         $fn = function ( string $i_stText, int $i_nIndex ) : array {
             return $this->readlineCompletion( $i_stText, $i_nIndex );

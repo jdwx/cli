@@ -52,7 +52,6 @@ final class CommandMatcher {
                 $rNewMatches = [];
             }
             $rNewMatches[] = $stCommand;
-            // echo "Match: ", $stCommand, " (", $uMatchLen, ")\n";
         }
         return $rNewMatches;
     }
@@ -80,10 +79,12 @@ final class CommandMatcher {
             $uMatchLen += 10;
         }
 
-        # If we got here, the input and the command are the same length. We give that a huge
-        # boost because a command that matches the length should always win over any inexact
-        # matches.
-        $uMatchLen += 1_000_000;
+        # If the input and the command are the same length, we give that a huge
+        # boost because a command that matches the length exactly should always
+        # win out over any inexact matches.
+        if ( $uInputLen === $uCommandLen ) {
+            $uMatchLen += 1_000_000;
+        }
         return $uMatchLen;
     }
 

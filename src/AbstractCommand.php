@@ -33,6 +33,12 @@ abstract class AbstractCommand {
         /** If options are used they are of the form "key" => "default_value". */
     ];
 
+    /**
+     * If true, the command is added to history when run. This is almost always
+     * desirable unless the command manipulates the history itself.
+     */
+    public const HISTORY = true;
+
 
     private Interpreter $cli;
     private ?array $nrOptions = null;
@@ -108,6 +114,21 @@ abstract class AbstractCommand {
 
     protected function cli() : Interpreter {
         return $this->cli;
+    }
+
+
+    protected function logError( string $i_stError, array $i_rContext = [] ) : void {
+        $this->cli()->logError( $i_stError, $i_rContext );
+    }
+
+
+    protected function logInfo( string $i_stInfo, array $i_rContext = [] ) : void {
+        $this->cli()->logInfo( $i_stInfo, $i_rContext );
+    }
+
+
+    protected function logWarning( string $i_stWarning, array $i_rContext = [] ) : void {
+        $this->cli()->logWarning( $i_stWarning, $i_rContext );
     }
 
 

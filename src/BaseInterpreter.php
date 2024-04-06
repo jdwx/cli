@@ -27,6 +27,15 @@ class BaseInterpreter extends Application {
 
     protected string $stPrompt;
 
+    /** @var string[]
+     * We can't use readline_list_history() because it doesn't work on all
+     * systems, so we maintain our own history instead. This also allows
+     * us to manipulate the history in ways that readline doesn't support.
+     */
+    protected array $rHistory = [];
+
+    protected int $uHistoryLength = 100;
+
 
     public function __construct( string           $i_stPrompt = '> ', array|Arguments|null $i_argv = null,
                                  ?LoggerInterface $i_log = null ) {
@@ -151,7 +160,25 @@ class BaseInterpreter extends Application {
     }
 
 
+    /** @return string[] */
+    public function getHistory() : array {
+        return $this->rHistory;
+    }
+
+
     public function handleCommand( string $st ) : void {
+
+        if ( str_starts_with( $st, '!' ) ) {
+            $st = substr( $st, 1 );
+            $r = array_reverse( $this->rHistory );
+            foreach ( $r as $line ) {
+                if ( str_starts_with( $line, $st ) ) {
+                    $this->handleCommand( $line );
+                    return;
+                }
+            }
+            $this->logError( "No match in history: {$st}" );
+        }
 
         $rInput = LineParser::parseLine( $st );
         if ( ! $rInput instanceof ParsedLine ) {
@@ -186,21 +213,28 @@ class BaseInterpreter extends Application {
         $stCommand = array_shift( $rMatches );
         $method = $this->commands[ $stCommand ];
         $args = $rInput->getSegments();
-        $args = array_slice( $args, count( explode( ' ', $stCommand ) ) );
+        $uCommandLength = count( explode( ' ', $stCommand ) );
+        $args = array_slice( $args, $uCommandLength );
         if ( [ "?" ] == $args ) {
             $this->showHelp( [ $stCommand ] );
             return;
         }
+        $st = $stCommand . ' ' . $rInput->getOriginal( $uCommandLength );
         $args = $this->newArguments( $args );
         try {
+            $bHistory = true;
             if ( $method instanceof AbstractCommand ) {
                 $method->runOuter( $args );
+                $bHistory = $method::HISTORY;
+            } elseif ( method_exists( $this, $method ) ) {
+                $this->$method( $args );
+            } else {
+                $this->logError( "No implementation for command: {$stCommand}" );
                 return;
             }
-            # This exists only for historical reasons. It cannot be deprecated, yet. But this should never happen
-            # in new code.
-            if ( method_exists( $this, $method ) ) {
-                $this->$method( $args );
+            if ( $bHistory ) {
+                $this->rHistory[] = $st;
+                $this->rHistory = array_slice( $this->rHistory, -$this->uHistoryLength, preserve_keys:  true );
             }
         } catch ( BadArgumentException $ex ) {
             $this->logError( $ex->getMessage() );

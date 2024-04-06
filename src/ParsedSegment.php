@@ -21,6 +21,16 @@ class ParsedSegment {
     }
 
 
+    public function getOriginal() : string {
+        return match ( $this->type ) {
+            Segment::DELIMITER, Segment::UNQUOTED => $this->text,
+            Segment::SINGLE_QUOTED => "'" . $this->text . "'",
+            Segment::DOUBLE_QUOTED => '"' . $this->text . '"',
+            Segment::BACK_QUOTED => "`" . $this->text . "`",
+        };
+    }
+
+
     public function isDelimiter() : bool {
         return Segment::DELIMITER === $this->type;
     }
