@@ -21,7 +21,6 @@ class CommandHistoryRun extends Command {
 
 
     protected function run( Arguments $args ) : void {
-        var_dump( $args );
         $uIndex = $args->shiftUnsignedIntegerEx();
         $args->end();
         $rHistory = $this->cli()->getHistory();
