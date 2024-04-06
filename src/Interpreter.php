@@ -20,7 +20,7 @@ class Interpreter extends BaseInterpreter {
 
 
     /** @var array<string, string> */
-    protected array $rVariables = [];
+    private array $rVariables = [];
 
 
     public function __construct( string           $i_stPrompt = '> ', array|Arguments|null $i_argv = null,
@@ -38,6 +38,11 @@ class Interpreter extends BaseInterpreter {
             return $this->readlineCompletion( $i_stText, $i_nIndex );
         };
         readline_completion_function( $fn );
+    }
+
+
+    public function getVariable( string $i_stName ) : string {
+        return $this->rVariables[ $i_stName ];
     }
 
 

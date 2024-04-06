@@ -7,12 +7,14 @@ It is designed to be easy to use and easy to extend and to provide features that
 be tedious to implement from scratch.
 
 It provides:
-* Command line editing and history through readline.
-* Command parser with support for single and double-quoted strings, escaped characters, and backquoted 
+* Command line editing through readline.
+* Command parser with support for single and double-quoted strings, escape sequences, and backquoted 
   command substitution.
 * Variable substitution in command strings. (Supports both ${var} and $var syntax.)
 * Command autocompletion and context-aware help.
 * A handful of common built-in commands (e.g., echo and expr).
+* Command line history view, search, and re-run.
+* \# comments.
 
 ## Installation
 

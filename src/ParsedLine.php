@@ -7,10 +7,13 @@ declare( strict_types = 1 );
 namespace JDWX\CLI;
 
 
+use Countable;
+
+
 require_once __DIR__ . "/ParsedSegment.php";
 
 
-class ParsedLine {
+class ParsedLine implements Countable {
 
 
     /** @var ParsedSegment[] */
@@ -47,6 +50,19 @@ class ParsedLine {
     }
 
 
+    public function count() : int {
+        return count( $this->rSegments );
+    }
+
+
+    /**
+     * Reconstructs the originally-entered text as closely as possible.
+     *
+     * @param int $i_uSkipArgs The number of arguments to skip. This is useful
+     *                         when you want to get the original text of a line
+     *                         without the command name, for example.
+     * @return string The original text of the line. (Approximately.)
+     */
     public function getOriginal( int $i_uSkipArgs = 0 ) : string {
         $rOut = [];
         foreach ( $this->rSegments as $seg ) {
@@ -63,7 +79,40 @@ class ParsedLine {
     }
 
 
-    /** @return string[] */
+    /**
+     * @return string The fully-processed text of the line after all
+     *                substitutions and quotes have been resolved.
+     *
+     * See also: getSegments() which is more useful most of the time.
+     * This method is mainly helpful for debugging and testing.
+     */
+    public function getProcessed() : string {
+        $st = "";
+        foreach ( $this->rSegments as $seg ) {
+            $st .= $seg->getProcessed();
+        }
+        return $st;
+    }
+
+
+    /**
+     * @param int $i_uIndex Which segment to return.
+     * @return ParsedSegment The requested segment.
+     *
+     * This is mainly useful for testing.
+     */
+    public function getSegment( int $i_uIndex ) : ParsedSegment {
+        return $this->rSegments[ $i_uIndex ];
+    }
+
+
+    /**
+     * Returns the line as an array of individual arguments after quotes and
+     * substitutions have been performed. So all the weird cases like foo" bar"
+     * (which is one argument 'foo bar') are resolved at this point.
+     *
+     * @return string[] An array of individual arguments.
+     */
     public function getSegments() : array {
         $st = "";
         $rOut = [];
@@ -91,6 +140,12 @@ class ParsedLine {
     }
 
 
+    /**
+     * If this method returns an error, the underlying segments are in an
+     * inconsistent state and should not be used.
+     *
+     * @return true|string True if successful, otherwise an error message.
+     */
     public function substVariables( array $i_rVariables ) : true|string {
         foreach ( $this->rSegments as $seg ) {
             $bst = $seg->substVariables( $i_rVariables );

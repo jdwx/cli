@@ -14,6 +14,16 @@ require_once __DIR__ . '/MyTestLogger.php';
 class InterpreterTest extends TestCase {
 
 
+    public function testBackQuotes() : void {
+        $cli = new MyTestInterpreter();
+        $cli->readLines = [ "echo `echo hello`" ];
+        ob_start();
+        $cli->run();
+        $st = trim( ob_get_clean() );
+        self::assertSame( "hello", $st );
+    }
+
+
     public function testEcho() : void {
         $cli = new MyTestInterpreter();
         $cli->readLines = [ "echo hello" ];
@@ -83,6 +93,26 @@ class InterpreterTest extends TestCase {
         $cli->showHelp([ 'echo' ]);
         $st = ob_get_clean();
         self::assertStringContainsString( 'Echo the arguments', $st);
+    }
+
+
+    public function testVariables() : void {
+        $cli = new MyTestInterpreter();
+        $cli->readLines = [ 'set x 5', 'echo $x' ];
+        ob_start();
+        $cli->run();
+        $st = trim( ob_get_clean() );
+        self::assertSame( '5', $st );
+        self::assertSame( '5', $cli->getVariable( 'x' ) );
+    }
+
+
+    public function testVariablesError() : void {
+        $log = new MyTestLogger();
+        $cli = new MyTestInterpreter( i_log: $log );
+        $cli->readLines = [ 'echo $y' ];
+        $cli->run();
+        self::assertStringContainsString( 'Undefined', $log->message );
     }
 
 
