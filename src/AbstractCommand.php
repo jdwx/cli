@@ -8,6 +8,8 @@ namespace JDWX\CLI;
 
 
 use JDWX\Args\Arguments;
+use JDWX\Args\BadArgumentException;
+use JDWX\Args\ExtraArgumentsException;
 use LogicException;
 
 
@@ -88,7 +90,11 @@ abstract class AbstractCommand {
 
 
     public function getUsage() : ?string {
-        return static::USAGE;
+        $stUsage = static::USAGE ?? "";
+        if ( ! str_starts_with( $stUsage, static::COMMAND ) ) {
+            $stUsage = trim( static::COMMAND . ' ' . $stUsage );
+        }
+        return $stUsage;
     }
 
 
@@ -108,12 +114,24 @@ abstract class AbstractCommand {
      */
     public function runOuter( Arguments $args ) : void {
         assert( method_exists( $this, "run" ), "Command " . static::COMMAND . " has no run method." );
-        $this->run( $args );
+        try {
+            $this->run( $args );
+        } catch ( BadArgumentException|ExtraArgumentsException $ex ) {
+            $this->logError( $ex->getMessage() );
+            if ( is_string( static::HELP ) ) {
+                echo "Usage: " . $this->getUsage(), "\n";
+            }
+        }
     }
 
 
     protected function cli() : Interpreter {
         return $this->cli;
+    }
+
+
+    protected function log( int $i_iPriority, string $i_stMessage, array $i_rContext = [] ) : void {
+        $this->cli()->log( $i_iPriority, $i_stMessage, $i_rContext );
     }
 
 

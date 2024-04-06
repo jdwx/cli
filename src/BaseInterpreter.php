@@ -11,6 +11,7 @@ use Exception;
 use JDWX\Args\ArgumentParser;
 use JDWX\Args\Arguments;
 use JDWX\Args\BadArgumentException;
+use JDWX\Args\ExtraArgumentsException;
 use Psr\Log\LoggerInterface;
 
 
@@ -133,11 +134,7 @@ class BaseInterpreter extends Application {
     protected function addCommand( string  $i_stCommand, string|AbstractCommand $i_command,
                                    ?string $i_nstHelp = null,
                                    ?string $i_nstUsage = null ) : void {
-        if ( is_string( $i_nstUsage ) ) {
-            if ( ! str_starts_with( $i_nstUsage, $i_stCommand ) ) {
-                $i_nstUsage = trim( $i_stCommand . ' ' . $i_nstUsage );
-            }
-        } else {
+        if ( ! is_string( $i_nstUsage ) ) {
             $i_nstUsage = $i_stCommand;
         }
 
@@ -236,8 +233,6 @@ class BaseInterpreter extends Application {
                 $this->rHistory[] = $st;
                 $this->rHistory = array_slice( $this->rHistory, -$this->uHistoryLength, preserve_keys:  true );
             }
-        } catch ( BadArgumentException $ex ) {
-            $this->logError( $ex->getMessage() );
         } catch ( Exception $ex ) {
             $this->logError( 'EXCEPTION: ' . get_class( $ex ) . ': ' . $ex->getMessage() );
             echo $ex->getTraceAsString(), "\n";
