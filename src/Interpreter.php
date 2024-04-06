@@ -132,7 +132,11 @@ class Interpreter extends Application {
     }
 
 
-    protected function addCommand( string  $i_stCommand, string|AbstractCommand $i_stMethod,
+    /**
+     * Do not call this method yourself. Doing so is unsupported. This method exists separately
+     * from addCommandClass() only for historical reasons.
+     */
+    protected function addCommand( string  $i_stCommand, string|AbstractCommand $i_command,
                                    ?string $i_nstHelp = null,
                                    ?string $i_nstUsage = null ) : void {
         if ( is_string( $i_nstUsage ) ) {
@@ -146,7 +150,7 @@ class Interpreter extends Application {
         if ( ! $i_nstHelp ) {
             $i_nstHelp = 'No help available.';
         }
-        $this->commands[ $i_stCommand ] = $i_stMethod;
+        $this->commands[ $i_stCommand ] = $i_command;
         $this->help[ $i_nstUsage ] = $i_nstHelp;
 
     }
@@ -213,6 +217,8 @@ class Interpreter extends Application {
                 $method->runOuter( $args );
                 return;
             }
+            # This exists only for historical reasons. It cannot be deprecated, yet. But this should never happen
+            # in new code.
             if ( method_exists( $this, $method ) ) {
                 $this->$method( $args );
             }
