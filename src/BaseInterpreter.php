@@ -10,8 +10,6 @@ namespace JDWX\CLI;
 use Exception;
 use JDWX\Args\ArgumentParser;
 use JDWX\Args\Arguments;
-use JDWX\Args\BadArgumentException;
-use JDWX\Args\ExtraArgumentsException;
 use Psr\Log\LoggerInterface;
 
 
