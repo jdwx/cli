@@ -10,9 +10,9 @@ namespace JDWX\CLI;
 class ParsedSegment {
 
 
-    public Segment $type;
+    protected Segment $type;
 
-    public string $text;
+    protected string $text;
 
 
     public function __construct( Segment $i_type, string $i_text ) {
@@ -21,13 +21,28 @@ class ParsedSegment {
     }
 
 
-    public function getOriginal() : string {
+    public function getOriginal( bool $i_bIncludeComments = false ) : string {
         return match ( $this->type ) {
             Segment::DELIMITER, Segment::UNQUOTED => $this->text,
             Segment::SINGLE_QUOTED => "'" . $this->text . "'",
             Segment::DOUBLE_QUOTED => '"' . $this->text . '"',
             Segment::BACK_QUOTED => "`" . $this->text . "`",
+            Segment::COMMENT => $i_bIncludeComments ? "#" . $this->text : "",
         };
+    }
+
+
+    public function getProcessed() : string {
+        return match ( $this->type ) {
+            Segment::DELIMITER, Segment::SINGLE_QUOTED, Segment::BACK_QUOTED => $this->text,
+            Segment::UNQUOTED, Segment::DOUBLE_QUOTED => self::substEscapeSequences( $this->text ),
+            Segment::COMMENT => "",
+        };
+    }
+
+
+    public function isComment() : bool {
+        return Segment::COMMENT === $this->type;
     }
 
 
@@ -46,19 +61,32 @@ class ParsedSegment {
     }
 
 
-    public function substEscapeSequences() : void {
-        if ( Segment::SINGLE_QUOTED === $this->type ) {
-            return;
-        }
-        $this->text = str_replace( "\\n", "\n", $this->text );
-        $this->text = str_replace( "\\r", "\r", $this->text );
-        $this->text = str_replace( "\\t", "\t", $this->text );
-        $this->text = str_replace( "\\v", "\v", $this->text );
-        $this->text = str_replace( "\\e", "\e", $this->text );
-        $this->text = str_replace( "\\f", "\f", $this->text );
-        $this->text = str_replace( "\\a", "\a", $this->text );
-        $this->text = str_replace( "\\b", "\b", $this->text );
-        $this->text = str_replace( "\\0", "\0", $this->text );
+    public static function substEscapeSequences( string $st ) : string {
+
+        # Handle special character escape sequences.
+        $st = str_replace( "\\n", "\n", $st );
+        $st = str_replace( "\\r", "\r", $st );
+        $st = str_replace( "\\t", "\t", $st );
+        $st = str_replace( "\\v", "\v", $st );
+        $st = str_replace( "\\e", "\e", $st );
+        $st = str_replace( "\\f", "\f", $st );
+        $st = str_replace( "\\a", "\a", $st );
+        $st = str_replace( "\\b", "\b", $st );
+        $st = str_replace( "\\0", "\0", $st );
+
+        # Handle octal escape sequences.
+        $st = preg_replace_callback( '/\\\\([0-7]{1,3})/', function ( $matches ) {
+            return chr( octdec( $matches[ 1 ] ) );
+        }, $st );
+
+        # Handle Unicode escape sequences like "\u00C3" => "Ã".
+        $st = preg_replace_callback( '/\\\\[uU]([0-9a-fA-F]{4})/', function ( $matches ) {
+            return mb_convert_encoding( pack( 'H*', $matches[ 1 ] ), 'UTF-8', 'UCS-2BE' );
+        }, $st );
+
+        # Anything else, just remove the backslash as if unquoted.
+        return preg_replace( '/\\\\(.)/', '$1', $st );
+
     }
 
 

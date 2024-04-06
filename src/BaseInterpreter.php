@@ -185,6 +185,10 @@ class BaseInterpreter extends Application {
             return;
         }
         $args = $rInput->getSegments();
+        if ( 0 == count( $args ) ) {
+            # This was a whole-line comment. (Truly empty lines were already handled.)
+            return;
+        }
 
         $rMatches = CommandMatcher::match( $args, array_keys( $this->commands ) );
         $this->logDebug( "matches = " . json_encode( $rMatches ) );
@@ -279,7 +283,6 @@ class BaseInterpreter extends Application {
 
     /** @return bool Returns true if we should continue processing this input, otherwise false. */
     protected function subst( ParsedLine $i_rInput ) : bool {
-        $i_rInput->substEscapeSequences();
         $i_rInput->substBackQuotes( $this );
         return true;
     }

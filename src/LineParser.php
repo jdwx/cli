@@ -34,7 +34,7 @@ final class LineParser {
         $st = trim( preg_replace( "/\s\s+/", " ", $i_stLine ) );
         $pln = new ParsedLine();
         while ( $st !== "" ) {
-            $iSpan = strcspn( $st, " \"'#`" );
+            $iSpan = strcspn( $st, " \\\"'#`" );
             $stUnquoted = substr( $st, 0, $iSpan );
             $pln->addUnquoted( $stUnquoted );
             $ch = substr( $st, $iSpan, 1 );
@@ -63,6 +63,26 @@ final class LineParser {
                 }
                 $pln->addBackQuoted( $r[ 0 ] );
                 $stRest = $r[ 1 ];
+            } elseif ( "#" === $ch ) {
+                $pln->addComment( $stRest );
+                break;
+            } elseif ( "\\" === $ch ) {
+                if ( "" === $stRest ) {
+                    return "Unmatched backslash.";
+                }
+                if ( preg_match( '/[uU][0-9a-fA-F]{4}/', $stRest ) ) {
+                    $stNext = substr( $stRest, 0, 5 );
+                    $stRest = substr( $stRest, 5 );
+                } elseif ( preg_match( '/[0-7]{1,3}/', $stRest ) ) {
+                    $stNext = substr( $stRest, 0, 3 );
+                    $stRest = substr( $stRest, 3 );
+                } else {
+                    $stNext = substr( $stRest, 0, 1 );
+                    $stRest = substr( $stRest, 1 );
+                }
+                $pln->addUnquoted( '\\' . $stNext );
+            } else {
+                return "Unexpected character: $ch";
             }
             $st = $stRest;
         }

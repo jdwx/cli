@@ -22,6 +22,11 @@ class ParsedLine {
     }
 
 
+    public function addComment( string $i_st ) : void {
+        $this->addSegment( Segment::COMMENT, $i_st );
+    }
+
+
     public function addDoubleQuoted( string $i_st ) : void {
         $this->addSegment( Segment::DOUBLE_QUOTED, $i_st );
     }
@@ -64,13 +69,13 @@ class ParsedLine {
         $rOut = [];
         foreach ( $this->rSegments as $seg ) {
             if ( $seg->isDelimiter() ) {
-                if ( $st ) {
+                if ( $st !== "" ) {
                     $rOut[] = $st;
                     $st = "";
                 }
                 continue;
             }
-            $st .= $seg->text;
+            $st .= $seg->getProcessed();
         }
         if ( $st !== "" ) {
             $rOut[] = $st;
@@ -82,13 +87,6 @@ class ParsedLine {
     public function substBackQuotes( BaseInterpreter $i_cli ) : void {
         foreach ( $this->rSegments as $seg ) {
             $seg->substBackQuotes( $i_cli );
-        }
-    }
-
-
-    public function substEscapeSequences() : void {
-        foreach ( $this->rSegments as $seg ) {
-            $seg->substEscapeSequences();
         }
     }
 
