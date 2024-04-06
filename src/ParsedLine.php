@@ -17,6 +17,21 @@ class ParsedLine {
     private array $rSegments = [];
 
 
+    public function addBackQuoted( string $i_st ) : void {
+        $this->addSegment( Segment::BACK_QUOTED, $i_st );
+    }
+
+
+    public function addDoubleQuoted( string $i_st ) : void {
+        $this->addSegment( Segment::DOUBLE_QUOTED, $i_st );
+    }
+
+
+    public function addSingleQuoted( string $i_st ) : void {
+        $this->addSegment( Segment::SINGLE_QUOTED, $i_st );
+    }
+
+
     public function addSpace( $i_ch = " " ) : void {
         $this->addSegment( Segment::DELIMITER, $i_ch );
     }
@@ -27,26 +42,40 @@ class ParsedLine {
     }
 
 
-    public function addSingleQuoted( string $i_st ) : void {
-        $this->addSegment( Segment::SINGLE_QUOTED, $i_st );
-    }
-
-
-    public function addDoubleQuoted( string $i_st ) : void {
-        $this->addSegment( Segment::DOUBLE_QUOTED, $i_st );
-    }
-
-
-    public function addBackQuoted( string $i_st ) : void {
-        $this->addSegment( Segment::BACK_QUOTED, $i_st );
-    }
-
-
-    private function addSegment( Segment $i_type, string $i_text ) : void {
-        if ( "" === $i_text ) {
-            return;
+    public function getOriginal( int $i_uSkipArgs = 0 ) : string {
+        $rOut = [];
+        foreach ( $this->rSegments as $seg ) {
+            if ( $i_uSkipArgs > 0 && $seg->isDelimiter() ) {
+                $i_uSkipArgs--;
+                continue;
+            }
+            if ( $i_uSkipArgs > 0 ) {
+                continue;
+            }
+            $rOut[] = $seg->getOriginal();
         }
-        $this->rSegments[] = new ParsedSegment( $i_type, $i_text );
+        return implode( "", $rOut );
+    }
+
+
+    /** @return string[] */
+    public function getSegments() : array {
+        $st = "";
+        $rOut = [];
+        foreach ( $this->rSegments as $seg ) {
+            if ( $seg->isDelimiter() ) {
+                if ( $st ) {
+                    $rOut[] = $st;
+                    $st = "";
+                }
+                continue;
+            }
+            $st .= $seg->text;
+        }
+        if ( $st !== "" ) {
+            $rOut[] = $st;
+        }
+        return $rOut;
     }
 
 
@@ -75,24 +104,11 @@ class ParsedLine {
     }
 
 
-    /** @return string[] */
-    public function getSegments() : array {
-        $st = "";
-        $rOut = [];
-        foreach ( $this->rSegments as $seg ) {
-            if ( $seg->isDelimiter() ) {
-                if ( $st ) {
-                    $rOut[] = $st;
-                    $st = "";
-                }
-                continue;
-            }
-            $st .= $seg->text;
+    private function addSegment( Segment $i_type, string $i_text ) : void {
+        if ( "" === $i_text ) {
+            return;
         }
-        if ( $st ) {
-            $rOut[] = $st;
-        }
-        return $rOut;
+        $this->rSegments[] = new ParsedSegment( $i_type, $i_text );
     }
 
 
