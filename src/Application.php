@@ -31,7 +31,7 @@ abstract class Application {
 
     /** @param string[]|Arguments|null $i_argv */
     public function __construct( array|Arguments|null $i_argv = null, private readonly ?LoggerInterface $log = null ) {
-        $this->pid = posix_getpid();
+        $this->pid = getmypid();
         if ( $i_argv instanceof Arguments ) {
             $this->args = $i_argv;
         } else {
