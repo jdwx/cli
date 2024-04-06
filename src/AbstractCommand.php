@@ -116,7 +116,12 @@ abstract class AbstractCommand {
         assert( method_exists( $this, "run" ), "Command " . static::COMMAND . " has no run method." );
         try {
             $this->run( $args );
-        } catch ( BadArgumentException|ExtraArgumentsException $ex ) {
+        } catch ( BadArgumentException $ex ) {
+            $this->logError( $ex->getMessage() . " \"" . $ex->getValue() . "\"" );
+            if ( is_string( static::HELP ) ) {
+                echo "Usage: " . $this->getUsage(), "\n";
+            }
+        } catch ( ExtraArgumentsException $ex ) {
             $this->logError( $ex->getMessage() );
             if ( is_string( static::HELP ) ) {
                 echo "Usage: " . $this->getUsage(), "\n";
