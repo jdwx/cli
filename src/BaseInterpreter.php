@@ -10,6 +10,8 @@ namespace JDWX\CLI;
 use Exception;
 use JDWX\Args\ArgumentParser;
 use JDWX\Args\Arguments;
+use JDWX\Args\ParsedString;
+use JDWX\Args\StringParser;
 use Psr\Log\LoggerInterface;
 
 
@@ -175,16 +177,16 @@ class BaseInterpreter extends Application {
             $this->logError( "No match in history: {$st}" );
         }
 
-        $rInput = LineParser::parseLine( $st );
-        if ( ! $rInput instanceof ParsedLine ) {
-            $this->logError( $rInput );
+        $parsedString = StringParser::parseString( $st );
+        if ( ! $parsedString instanceof ParsedString ) {
+            $this->logError( $parsedString );
             return;
         }
 
-        if ( ! $this->subst( $rInput ) ) {
+        if ( ! $this->subst( $parsedString ) ) {
             return;
         }
-        $args = $rInput->getSegments();
+        $args = $parsedString->getSegments();
         if ( 0 == count( $args ) ) {
             # This was a whole-line comment. (Truly empty lines were already handled.)
             return;
@@ -211,14 +213,14 @@ class BaseInterpreter extends Application {
         }
         $stCommand = array_shift( $rMatches );
         $method = $this->commands[ $stCommand ];
-        $args = $rInput->getSegments();
+        $args = $parsedString->getSegments();
         $uCommandLength = count( explode( ' ', $stCommand ) );
         $args = array_slice( $args, $uCommandLength );
         if ( [ "?" ] == $args ) {
             $this->showHelp( [ $stCommand ] );
             return;
         }
-        $st = $stCommand . ' ' . $rInput->getOriginal( $uCommandLength );
+        $st = $stCommand . ' ' . $parsedString->getOriginal( $uCommandLength );
         $args = $this->newArguments( $args );
         try {
             $bHistory = true;
@@ -282,8 +284,12 @@ class BaseInterpreter extends Application {
 
 
     /** @return bool Returns true if we should continue processing this input, otherwise false. */
-    protected function subst( ParsedLine $i_rInput ) : bool {
-        $i_rInput->substBackQuotes( $this );
+    protected function subst( ParsedString $i_rInput ) : bool {
+        $i_rInput->substBackQuotes( function( string $i_st ) {
+            ob_start();
+            $this->handleCommand( $i_st );
+            return ob_get_clean();
+        });
         return true;
     }
 

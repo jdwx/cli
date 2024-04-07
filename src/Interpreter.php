@@ -5,6 +5,7 @@ namespace JDWX\CLI;
 
 
 use JDWX\Args\Arguments;
+use JDWX\Args\ParsedString;
 use JDWX\CLI\Commands\CommandEcho;
 use JDWX\CLI\Commands\CommandExit;
 use JDWX\CLI\Commands\CommandExpr;
@@ -51,7 +52,7 @@ class Interpreter extends BaseInterpreter {
     }
 
 
-    protected function subst( ParsedLine $i_rInput ) : bool {
+    protected function subst( ParsedString $i_rInput ) : bool {
         $bst = $i_rInput->substVariables( $this->rVariables );
         if ( is_string( $bst ) ) {
             $this->logError( $bst );
