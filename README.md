@@ -72,11 +72,14 @@ well-tested.
 
 ## History
 
-This framework been in production for many years. It was refactored out of a larger
+This framework has been in production for many years. It was refactored out of a larger
 codebase and released as an open-source standalone module in 2024.
 
-There is a method called addCommand() that is present for historical reasons. It is
-used extensively in legacy code and is retained for compatibility. However, it 
-absolutely **must not** be used in new code. Using this results in 10,000-line 
-classes. We look forward to removing it someday. When that day arrives, no advance
-warning will be given.
+There is a method called addCommand() that is present for historical 
+reasons. It is used extensively in legacy code that implements commands 
+as methods of the Interpreter class instead of separate classes, 
+resulting in unmaintainable 10,000-line classes.  It is retained for 
+compatibility for now because refactoring those classes is exactly as quick 
+and pleasant as you'd expect (i.e., not at all). It absolutely 
+**must not** be used in new code. We look forward to removing it someday.
+When that day arrives, no advance warning will be given.
