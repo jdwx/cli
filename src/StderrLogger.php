@@ -7,6 +7,13 @@ declare( strict_types = 1 );
 namespace JDWX\CLI;
 
 
-/** @deprecated Preserve until 1.1.0. */
+/**
+ * @deprecated Use JDWX\App\StderrLogger directly.
+ *
+ * This is only here for backwards compatibility; the StderrLogger class
+ * moved to the JDWX\App package.
+ *
+ * Will be removed for 1.1.0.
+ */
 class StderrLogger extends \JDWX\App\StderrLogger {
 }
