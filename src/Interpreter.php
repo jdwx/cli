@@ -55,7 +55,10 @@ class Interpreter extends BaseInterpreter {
     protected function subst( ParsedString $i_rInput ) : bool {
         $bst = $i_rInput->substVariables( $this->rVariables );
         if ( is_string( $bst ) ) {
-            $this->logError( $bst );
+            $this->error( $bst, [
+                'input' => $i_rInput->debug(),
+                'vars' => $this->rVariables,
+            ] );
             return false;
         }
         return parent::subst( $i_rInput );

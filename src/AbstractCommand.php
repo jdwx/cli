@@ -7,10 +7,13 @@ declare( strict_types = 1 );
 namespace JDWX\CLI;
 
 
+use JDWX\App\TRelayLogger;
 use JDWX\Args\Arguments;
 use JDWX\Args\BadArgumentException;
 use JDWX\Args\ExtraArgumentsException;
 use LogicException;
+use Psr\Log\LoggerInterface;
+use Stringable;
 
 
 /**
@@ -24,7 +27,10 @@ use LogicException;
  * run() method with the proper signature.  If not, you can use the Command class
  * instead.
  */
-abstract class AbstractCommand {
+abstract class AbstractCommand implements LoggerInterface {
+
+
+    use TRelayLogger;
 
 
     protected const COMMAND = "____OVERLOAD_ME____";
@@ -117,12 +123,24 @@ abstract class AbstractCommand {
         try {
             $this->run( $args );
         } catch ( BadArgumentException $ex ) {
-            $this->logError( $ex->getMessage() . " \"" . $ex->getValue() . "\"" );
+            $this->error( $ex->getMessage() . " \"" . $ex->getValue() . "\"", [
+                "class" => $ex::class,
+                "code" => $ex->getCode(),
+                "file" => $ex->getFile(),
+                "line" => $ex->getLine(),
+                "value" => $ex->getValue(),
+            ] );
             if ( is_string( static::HELP ) ) {
                 echo "Usage: " . $this->getUsage(), "\n";
             }
         } catch ( ExtraArgumentsException $ex ) {
-            $this->logError( $ex->getMessage() );
+            $this->error( $ex->getMessage(), [
+                "class" => $ex::class,
+                "code" => $ex->getCode(),
+                "file" => $ex->getFile(),
+                "line" => $ex->getLine(),
+                "args" => $ex->getArguments(),
+            ]);
             if ( is_string( static::HELP ) ) {
                 echo "Usage: " . $this->getUsage(), "\n";
             }
@@ -135,23 +153,26 @@ abstract class AbstractCommand {
     }
 
 
-    protected function log( int $i_iPriority, string $i_stMessage, array $i_rContext = [] ) : void {
-        $this->cli()->log( $i_iPriority, $i_stMessage, $i_rContext );
+    public function log( mixed $level, string|Stringable $message, array $context = [] ) : void {
+        $this->cli()->log( $level, $message, $context );
     }
 
 
-    protected function logError( string $i_stError, array $i_rContext = [] ) : void {
-        $this->cli()->logError( $i_stError, $i_rContext );
+    /** @deprecated Remove at 1.1.0. */
+    protected function logError( string|Stringable $i_stError, array $i_rContext = [] ) : void {
+        $this->cli()->error( $i_stError, $i_rContext );
     }
 
 
-    protected function logInfo( string $i_stInfo, array $i_rContext = [] ) : void {
-        $this->cli()->logInfo( $i_stInfo, $i_rContext );
+    /** @deprecated Remove at 1.1.0. */
+    protected function logInfo( string|Stringable $i_stInfo, array $i_rContext = [] ) : void {
+        $this->cli()->info( $i_stInfo, $i_rContext );
     }
 
 
+    /** @deprecated Remove at 1.1.0. */
     protected function logWarning( string $i_stWarning, array $i_rContext = [] ) : void {
-        $this->cli()->logWarning( $i_stWarning, $i_rContext );
+        $this->cli()->warning( $i_stWarning, $i_rContext );
     }
 
 

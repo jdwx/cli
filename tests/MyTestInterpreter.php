@@ -42,8 +42,9 @@ class MyTestInterpreter extends Interpreter {
     }
 
 
-    protected function handleException( Exception $i_ex ) : void {
+    protected function handleException( Exception $i_ex ) : ?int {
         $this->ex = $i_ex;
+        return null;
     }
 
 

@@ -4,11 +4,12 @@
 declare( strict_types = 1 );
 
 
+use JDWX\App\BufferLogger;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LogLevel;
 
 
 require_once __DIR__ . '/MyTestInterpreter.php';
-require_once __DIR__ . '/MyTestLogger.php';
 
 
 class InterpreterTest extends TestCase {
@@ -76,13 +77,15 @@ class InterpreterTest extends TestCase {
 
 
     public function testRunForAmbiguous() : void {
-        $log = new MyTestLogger();
+        $log = new BufferLogger();
         $cli = new MyTestInterpreter( i_log: $log );
         $cli->readLines = [ "e" ];
         ob_start();
         $cli->run();
         ob_end_clean();
-        self::assertSame( LOG_WARNING, $log->level );
+        self::assertCount( 1, $log );
+        $log = $log->shiftLog();
+        self::assertSame( LogLevel::WARNING, $log->level );
         self::assertStringContainsString( 'Ambiguous', $log->message );
     }
 
@@ -108,10 +111,12 @@ class InterpreterTest extends TestCase {
 
 
     public function testVariablesError() : void {
-        $log = new MyTestLogger();
+        $log = new BufferLogger();
         $cli = new MyTestInterpreter( i_log: $log );
         $cli->readLines = [ 'echo $y' ];
         $cli->run();
+        self::assertCount( 1, $log );
+        $log = $log->shiftLog();
         self::assertStringContainsString( 'Undefined', $log->message );
     }
 

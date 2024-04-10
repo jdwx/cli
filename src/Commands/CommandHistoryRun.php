@@ -25,11 +25,11 @@ class CommandHistoryRun extends Command {
         $args->end();
         $rHistory = $this->cli()->getHistory();
         if ( ! array_key_exists( $uIndex, $rHistory ) ) {
-            $this->logError( "Index {$uIndex} is out of range." );
+            $this->error( "History index {$uIndex} is out of range." );
             return;
         }
         $stCommand = $rHistory[ $uIndex ];
-        $this->logInfo( "[$stCommand]" );
+        $this->info( "[$stCommand]" );
         $this->cli()->handleCommand( $stCommand );
 
     }

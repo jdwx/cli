@@ -8,6 +8,7 @@ namespace JDWX\CLI;
 
 
 use Exception;
+use JDWX\App\Application;
 use JDWX\Args\ArgumentParser;
 use JDWX\Args\Arguments;
 use JDWX\Args\ParsedString;
@@ -174,12 +175,12 @@ class BaseInterpreter extends Application {
                     return;
                 }
             }
-            $this->logError( "No match in history: {$st}" );
+            $this->error( "No match in history: {$st}" );
         }
 
         $parsedString = StringParser::parseString( $st );
         if ( ! $parsedString instanceof ParsedString ) {
-            $this->logError( $parsedString );
+            $this->error( $parsedString );
             return;
         }
 
@@ -193,20 +194,20 @@ class BaseInterpreter extends Application {
         }
 
         $rMatches = CommandMatcher::match( $args, array_keys( $this->commands ) );
-        $this->logDebug( "matches = " . json_encode( $rMatches ) );
+        $this->debug( "matches = " . json_encode( $rMatches ) );
         if ( 0 == count( $rMatches ) ) {
-            $this->logError( "Unknown command: {$st}" );
+            $this->error( "Unknown command: {$st}" );
             return;
         }
         if ( 1 < count( $rMatches ) ) {
             $rMatches = CommandMatcher::winnow( $args, $rMatches );
-            $this->logDebug( "winnow = " . json_encode( $rMatches ) );
+            $this->debug( "winnow = " . json_encode( $rMatches ) );
             if ( 0 == count( $rMatches ) ) {
-                $this->logError( "Invalid command: {$st}" );
+                $this->error( "Invalid command: {$st}" );
                 return;
             }
             if ( 1 < count( $rMatches ) ) {
-                $this->logWarning( "Ambiguous command: {$st}" );
+                $this->warning( "Ambiguous command: {$st}" );
                 $this->showHelp( $rMatches );
                 return;
             }
@@ -230,7 +231,7 @@ class BaseInterpreter extends Application {
             } elseif ( method_exists( $this, $method ) ) {
                 $this->$method( $args );
             } else {
-                $this->logError( "No implementation for command: {$stCommand}" );
+                $this->error( "No implementation for command: {$stCommand}" );
                 return;
             }
             if ( $bHistory ) {
@@ -238,7 +239,7 @@ class BaseInterpreter extends Application {
                 $this->rHistory = array_slice( $this->rHistory, -$this->uHistoryLength, preserve_keys:  true );
             }
         } catch ( Exception $ex ) {
-            $this->logError( 'EXCEPTION: ' . get_class( $ex ) . ': ' . $ex->getMessage() );
+            $this->error( 'EXCEPTION: ' . get_class( $ex ) . ': ' . $ex->getMessage() );
             echo $ex->getTraceAsString(), "\n";
         }
 
