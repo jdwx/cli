@@ -50,18 +50,71 @@ class BaseInterpreter extends Application {
     }
 
 
-
+    /**
+     * @param string $i_stPrompt
+     * @return bool
+     *
+     * Ask a yes/no question.  Returns true for yes, false for no.  If the user
+     * enters something that can't be interpreted as "yes" or "no", the question
+     * is repeated. See ArgumentParser::parseBool() for a list of recognized
+     * values.
+     */
     public function askYN( string $i_stPrompt ) : bool {
         while ( true ) {
-            $strYN = readline( $i_stPrompt );
+            $strYN = $this->readLine( $i_stPrompt );
             $bYN = ArgumentParser::parseBool( $strYN );
             if ( $bYN === true || $bYN === false ) return $bYN;
         }
     }
 
 
-    /** @noinspection PhpUnusedParameterInspection The _stText parameter contains only the current word,
-     * which is never useful in command line completion. */
+    /** @return string[] */
+    public function getHistory() : array {
+        return $this->rHistory;
+    }
+
+
+    /**
+     * @param string $st
+     * @return void
+     *
+     * Performs the basic steps for parsing a command line into a ParsedString
+     * object and then passing that on to handleCommandParsedString().  This
+     * command is public so that the application can feed in commands that
+     * were not entered interactively if needed.
+     */
+    public function handleCommand( string $st ) : void {
+
+        if ( str_starts_with( $st, '!' ) ) {
+            $st = substr( $st, 1 );
+            $r = array_reverse( $this->rHistory );
+            foreach ( $r as $line ) {
+                if ( str_starts_with( $line, $st ) ) {
+                    $this->handleCommand( $line );
+                    return;
+                }
+            }
+            $this->error( "No match in history: {$st}" );
+        }
+
+        $parsedString = StringParser::parseString( $st );
+        if ( ! $parsedString instanceof ParsedString ) {
+            $this->error( $parsedString );
+            return;
+        }
+
+        if ( ! $this->subst( $parsedString ) ) {
+            return;
+        }
+        $this->handleCommandParsedString( $parsedString );
+    }
+
+
+    /**
+     * @noinspection PhpUnusedParameterInspection The _stText parameter contains only the current word,
+     * which is not useful for our multi-word command completion. The readlineInfo() contains better
+     * information about the full entry so far, so we'll ignore the first parameter and use that instead.
+     */
     public function readlineCompletion( string $_stText, int $i_nIndex ) : array {
         $rlInfo = $this->readlineInfo();
         $fullInput = trim( substr( $rlInfo[ 'line_buffer' ], 0, $rlInfo[ 'end' ] ) );
@@ -94,20 +147,17 @@ class BaseInterpreter extends Application {
     }
 
 
-    protected function readlineInfo() : array {
-        # This prevents readline from ever looking at filenames as an autocomplete option.
-        readline_info( 'attempted_completion_over', 1 );
-        $rlInfo = readline_info();
-        assert( is_array( $rlInfo ) );
-        return $rlInfo;
-    }
-
-
     public function setContinue( bool $i_bContinue ) : void {
         $this->bContinue = $i_bContinue;
     }
 
 
+    /**
+     * @param array|null $i_rstCommands
+     * @return void
+     *
+     * Show help for the given commands. If no commands are given, show help for all commands.
+     */
     public function showHelp( ?array $i_rstCommands = null ) : void {
         if ( is_null( $i_rstCommands ) ) {
             $i_rstCommands = array_keys( $this->commands );
@@ -148,6 +198,15 @@ class BaseInterpreter extends Application {
     }
 
 
+    /**
+     * @param class-string<AbstractCommand> $i_stCommandClass
+     * @return void
+     *
+     * Add a command to the interpreter. Usually called from the constructor
+     * of a subclass of BaseInterpreter to add the commands that the
+     * interpreter will understand.  The $i_stCommandClass argument is
+     * easiest to provide in the form CommandClassName::class.
+     */
     protected function addCommandClass( string $i_stCommandClass ) : void {
         $cmd = new $i_stCommandClass( $this );
         assert( $cmd instanceof AbstractCommand );
@@ -158,41 +217,21 @@ class BaseInterpreter extends Application {
     }
 
 
-    /** @return string[] */
-    public function getHistory() : array {
-        return $this->rHistory;
-    }
+    /**
+     * @param ParsedString $i_command
+     * @return void
+     *
+     * This method handles converting a parsed string into a specific command
+     * and its arguments. It then runs the command.
+     */
+    protected function handleCommandParsedString( ParsedString $i_command ) : void {
 
-
-    public function handleCommand( string $st ) : void {
-
-        if ( str_starts_with( $st, '!' ) ) {
-            $st = substr( $st, 1 );
-            $r = array_reverse( $this->rHistory );
-            foreach ( $r as $line ) {
-                if ( str_starts_with( $line, $st ) ) {
-                    $this->handleCommand( $line );
-                    return;
-                }
-            }
-            $this->error( "No match in history: {$st}" );
-        }
-
-        $parsedString = StringParser::parseString( $st );
-        if ( ! $parsedString instanceof ParsedString ) {
-            $this->error( $parsedString );
-            return;
-        }
-
-        if ( ! $this->subst( $parsedString ) ) {
-            return;
-        }
-        $args = $parsedString->getSegments();
+        $args = $i_command->getSegments();
         if ( 0 == count( $args ) ) {
             # This was a whole-line comment. (Truly empty lines were already handled.)
             return;
         }
-
+        $st = implode( ' ', $args );
         $rMatches = CommandMatcher::match( $args, array_keys( $this->commands ) );
         $this->debug( "matches = " . json_encode( $rMatches ) );
         if ( 0 == count( $rMatches ) ) {
@@ -213,36 +252,14 @@ class BaseInterpreter extends Application {
             }
         }
         $stCommand = array_shift( $rMatches );
-        $method = $this->commands[ $stCommand ];
-        $args = $parsedString->getSegments();
         $uCommandLength = count( explode( ' ', $stCommand ) );
         $args = array_slice( $args, $uCommandLength );
+        $st = $stCommand . ' ' . $i_command->getOriginal( $uCommandLength );
         if ( [ "?" ] == $args ) {
             $this->showHelp( [ $stCommand ] );
             return;
         }
-        $st = $stCommand . ' ' . $parsedString->getOriginal( $uCommandLength );
-        $args = $this->newArguments( $args );
-        try {
-            $bHistory = true;
-            if ( $method instanceof AbstractCommand ) {
-                $method->runOuter( $args );
-                $bHistory = $method::HISTORY;
-            } elseif ( method_exists( $this, $method ) ) {
-                $this->$method( $args );
-            } else {
-                $this->error( "No implementation for command: {$stCommand}" );
-                return;
-            }
-            if ( $bHistory ) {
-                $this->rHistory[] = $st;
-                $this->rHistory = array_slice( $this->rHistory, -$this->uHistoryLength, preserve_keys:  true );
-            }
-        } catch ( Exception $ex ) {
-            $this->error( 'EXCEPTION: ' . get_class( $ex ) . ': ' . $ex->getMessage() );
-            echo $ex->getTraceAsString(), "\n";
-        }
-
+        $this->runCommand( $stCommand, $args, $st );
     }
 
 
@@ -260,8 +277,13 @@ class BaseInterpreter extends Application {
     }
 
 
+    /** Contains the basic read-eval-print-loop operation. */
     protected function main() : int {
         $this->rc = 0;
+
+        # We set this to true here because some applications might want to
+        # call this multiple times, e.g., for "escape to shell" type
+        # functionality from within another part of the application.
         $this->bContinue = true;
         while ( $this->bContinue ) {
             $str = $this->readLine();
@@ -276,6 +298,11 @@ class BaseInterpreter extends Application {
     }
 
 
+    /**
+     * We encapsulate readline stuff to the greatest extent possible because
+     * it is very hard to test.  It's easier to mock with attachment points
+     * like this one.
+     */
     protected function readLine( ?string $i_nstPrompt = null ) : bool|string {
         if ( is_null( $i_nstPrompt ) ) {
             $i_nstPrompt = $this->stPrompt;
@@ -284,13 +311,61 @@ class BaseInterpreter extends Application {
     }
 
 
-    /** @return bool Returns true if we should continue processing this input, otherwise false. */
+    protected function readlineInfo() : array {
+        # This prevents readline from ever looking at filenames as an autocomplete option.
+        readline_info( 'attempted_completion_over', 1 );
+        $rlInfo = readline_info();
+        assert( is_array( $rlInfo ) );
+        return $rlInfo;
+    }
+
+
+    /**
+     * @param string $i_stCommand Which command to execute.
+     * @param array $args The arguments to the command.
+     * @param string $i_stOriginal The full command line to be added to history on success.
+     * @return void
+     *
+     * Finds the implementation of a given command and runs it with the given arguments.
+     */
+    protected function runCommand( string $i_stCommand, array $args, string $i_stOriginal ) : void {
+        $method = $this->commands[ $i_stCommand ];
+        $args = $this->newArguments( $args );
+        try {
+            $bHistory = true;
+            if ( $method instanceof AbstractCommand ) {
+                $method->runOuter( $args );
+                $bHistory = $method::HISTORY;
+            } elseif ( method_exists( $this, $method ) ) {
+                $this->$method( $args );
+            } else {
+                $this->error( "No implementation for command: {$i_stCommand}" );
+                return;
+            }
+            if ( $bHistory ) {
+                $this->rHistory[] = $i_stOriginal;
+                $this->rHistory = array_slice( $this->rHistory, -$this->uHistoryLength, preserve_keys: true );
+            }
+        } catch ( Exception $ex ) {
+            $this->error( 'EXCEPTION: ' . get_class( $ex ) . ': ' . $ex->getMessage() );
+            echo $ex->getTraceAsString(), "\n";
+        }
+
+    }
+
+
+    /** @return bool Returns true if we should continue processing this input, otherwise false.
+     *
+     * Perform any desired substitutions. In the base implementation, this is just turning
+     * backquoted text into nested commands.  The Interpreter class adds environment variable
+     * substitution.
+     */
     protected function subst( ParsedString $i_rInput ) : bool {
-        $i_rInput->substBackQuotes( function( string $i_st ) {
+        $i_rInput->substBackQuotes( function ( string $i_st ) {
             ob_start();
             $this->handleCommand( $i_st );
             return ob_get_clean();
-        });
+        } );
         return true;
     }
 
