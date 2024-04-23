@@ -4,6 +4,7 @@
 declare( strict_types = 1 );
 
 
+use JDWX\App\BufferLogger;
 use JDWX\Args\Arguments;
 use PHPUnit\Framework\TestCase;
 
@@ -68,6 +69,19 @@ class CommandTest extends TestCase {
         $args = new Arguments([ 'foo', 'bar' ]);
         $command->runOuter( $args );
         self::assertSame( $args, $command->args );
+    }
+
+
+    public function testMissingArgument() : void {
+        $log = new BufferLogger();
+        $cli = new MyTestInterpreter( i_log: $log );
+        $command = new MyTestCommand( $cli, function( Arguments $args ) {
+            $args->shiftStringEx();
+        });
+        $args = new Arguments([]);
+        $command->runOuter( $args );
+        $le = $log->shiftLog();
+        self::assertSame( 'Missing argument', $le->message );
     }
 
 

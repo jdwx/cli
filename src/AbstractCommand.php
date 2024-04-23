@@ -11,6 +11,7 @@ use JDWX\App\TRelayLogger;
 use JDWX\Args\Arguments;
 use JDWX\Args\BadArgumentException;
 use JDWX\Args\ExtraArgumentsException;
+use JDWX\Args\MissingArgumentException;
 use LogicException;
 use Psr\Log\LoggerInterface;
 use Stringable;
@@ -140,6 +141,16 @@ abstract class AbstractCommand implements LoggerInterface {
                 "file" => $ex->getFile(),
                 "line" => $ex->getLine(),
                 "args" => $ex->getArguments(),
+            ]);
+            if ( is_string( static::HELP ) ) {
+                echo "Usage: " . $this->getUsage(), "\n";
+            }
+        } catch ( MissingArgumentException $ex ) {
+            $this->error( $ex->getMessage(), [
+                "class" => $ex::class,
+                "code" => $ex->getCode(),
+                "file" => $ex->getFile(),
+                "line" => $ex->getLine(),
             ]);
             if ( is_string( static::HELP ) ) {
                 echo "Usage: " . $this->getUsage(), "\n";
