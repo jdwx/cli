@@ -43,6 +43,11 @@ class BaseInterpreter extends Application {
                                  ?LoggerInterface $i_log = null ) {
         parent::__construct( $i_argv, $i_log );
         $this->stPrompt = $i_stPrompt;
+        $this->activate();
+    }
+
+
+    public function activate() : void {
         $fn = function ( string $i_stText, int $i_nIndex ) : array {
             return $this->readlineCompletion( $i_stText, $i_nIndex );
         };
