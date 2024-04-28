@@ -8,15 +8,14 @@ namespace JDWX\CLI;
 
 
 use Exception;
-use JDWX\App\Application;
-use JDWX\Args\ArgumentParser;
+use JDWX\App\InteractiveApplication;
 use JDWX\Args\Arguments;
 use JDWX\Args\ParsedString;
 use JDWX\Args\StringParser;
 use Psr\Log\LoggerInterface;
 
 
-class BaseInterpreter extends Application {
+class BaseInterpreter extends InteractiveApplication {
 
 
     public int $rc;
@@ -50,25 +49,7 @@ class BaseInterpreter extends Application {
         $fn = function ( string $i_stText, int $i_nIndex ) : array {
             return $this->readlineCompletion( $i_stText, $i_nIndex );
         };
-        readline_completion_function( $fn );
-    }
-
-
-    /**
-     * @param string $i_stPrompt
-     * @return bool
-     *
-     * Ask a yes/no question.  Returns true for yes, false for no.  If the user
-     * enters something that can't be interpreted as "yes" or "no", the question
-     * is repeated. See ArgumentParser::parseBool() for a list of recognized
-     * values.
-     */
-    public function askYN( string $i_stPrompt ) : bool {
-        while ( true ) {
-            $strYN = $this->readLine( $i_stPrompt );
-            $bYN = ArgumentParser::parseBool( $strYN );
-            if ( $bYN === true || $bYN === false ) return $bYN;
-        }
+        $this->readlineCompletionFunction( $fn );
     }
 
 
@@ -120,6 +101,8 @@ class BaseInterpreter extends Application {
      * information about the full entry so far, so we'll ignore the first parameter and use that instead.
      */
     public function readlineCompletion( string $_stText, int $i_nIndex ) : array {
+        # This prevents readline from ever looking at filenames as an autocomplete option.
+        $this->readlineInfoSet( 'attempted_completion_over', 1 );
         $rlInfo = $this->readlineInfo();
         $fullInput = trim( substr( $rlInfo[ 'line_buffer' ], 0, $rlInfo[ 'end' ] ) );
         $rMatches = [];
@@ -141,7 +124,7 @@ class BaseInterpreter extends Application {
         if ( 1 == count( $rMatches ) && $rCommands ) {
             echo "\n";
             $this->showHelp( $rCommands );
-            readline_redisplay();
+            $this->readlineRedisplay();
         }
         $rWordMatches = array_unique( $rWordMatches );
         if ( count( $rMatches ) > count( $rWordMatches ) ) {
@@ -275,7 +258,7 @@ class BaseInterpreter extends Application {
             if ( $line == "" ) {
                 return;
             }
-            readline_add_history( $line );
+            $this->readlineAddHistory( $line );
             $this->handleCommand( $line );
         }
     }
@@ -303,25 +286,8 @@ class BaseInterpreter extends Application {
     }
 
 
-    /**
-     * We encapsulate readline stuff to the greatest extent possible because
-     * it is very hard to test.  It's easier to mock with attachment points
-     * like this one.
-     */
-    protected function readLine( ?string $i_nstPrompt = null ) : bool|string {
-        if ( is_null( $i_nstPrompt ) ) {
-            $i_nstPrompt = $this->stPrompt;
-        }
-        return readline( $i_nstPrompt );
-    }
-
-
-    protected function readlineInfo() : array {
-        # This prevents readline from ever looking at filenames as an autocomplete option.
-        readline_info( 'attempted_completion_over', 1 );
-        $rlInfo = readline_info();
-        assert( is_array( $rlInfo ) );
-        return $rlInfo;
+    protected function readLine( ?string $i_stPrompt = null ) : bool|string {
+        return parent::readLine( $i_stPrompt ?? $this->stPrompt );
     }
 
 
