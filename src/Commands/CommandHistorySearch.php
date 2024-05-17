@@ -21,7 +21,7 @@ class CommandHistorySearch extends Command {
 
 
     protected function run( Arguments $args ) : void {
-        $stSearch = $args->endWithString();
+        $stSearch = $args->endWithStringEx();
         $rHistory = $this->cli()->getHistory();
         $rMatches = [];
         foreach ( $rHistory as $uIndex => $stCommand ) {

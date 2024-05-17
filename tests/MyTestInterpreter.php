@@ -32,7 +32,7 @@ class MyTestInterpreter extends Interpreter {
     }
 
 
-    public function askYN( string $i_stPrompt ) : bool {
+    public function askYN( string $i_stPrompt, ?bool $i_nbDefault = null, bool $i_bReturnOnFail = false ) : bool {
         return $this->yn;
     }
 
@@ -48,7 +48,7 @@ class MyTestInterpreter extends Interpreter {
     }
 
 
-    protected function readLine( ?string $i_nstPrompt = null ) : bool|string {
+    protected function readLine( ?string $i_nstPrompt = null ) : string|false {
         if ( empty( $this->readLines ) ) {
             return false;
         }

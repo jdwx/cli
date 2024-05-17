@@ -21,7 +21,7 @@ class CommandSet extends Command {
 
     protected function run( Arguments $args ) : void {
         $stKey = $args->shiftStringEx();
-        $stValue = $args->endWithString();
+        $stValue = $args->endWithStringEx();
         $this->cli()->setVariable( $stKey, $stValue );
     }
 

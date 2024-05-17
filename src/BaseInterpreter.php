@@ -286,7 +286,7 @@ class BaseInterpreter extends InteractiveApplication {
     }
 
 
-    protected function readLine( ?string $i_stPrompt = null ) : bool|string {
+    protected function readLine( ?string $i_stPrompt = null ) : string|false {
         return parent::readLine( $i_stPrompt ?? $this->stPrompt );
     }
 
