@@ -21,16 +21,13 @@ class CommandHistorySearch extends Command {
 
 
     protected function run( Arguments $args ) : void {
-        $stSearch = $args->endWithString();
+        $stSearch = $args->endWithStringEx( "Missing search string." );
         $rHistory = $this->cli()->getHistory();
-        $rMatches = [];
-        foreach ( $rHistory as $uIndex => $stCommand ) {
-            if ( str_contains( $stCommand, $stSearch ) ) {
-                $rMatches[ $uIndex ] = $stCommand;
-            }
-        }
+        $rMatches = array_filter( $rHistory, function ( $stCommand ) use ( $stSearch ) {
+            return str_contains( $stCommand, $stSearch );
+        } );
         $uCount = count( $rMatches );
-        echo "History has $uCount matching command", ($uCount == 1 ) ? "" : "s", ":\n";
+        echo "History has {$uCount} matching command", ($uCount == 1 ) ? "" : "s", ":\n";
         foreach ( $rMatches as $uIndex => $stCommand ) {
             $stIndex = str_pad( "$uIndex", 3, " ", STR_PAD_LEFT );
             echo "{$stIndex} {$stCommand}\n";

@@ -13,7 +13,7 @@ class MyTestCommand extends Command {
 
 
     protected const COMMAND = 'my';
-    protected const OPTIONS = [ 'foo' => 'foo_default' ];
+    protected const OPTIONS = [ 'foo' => 'foo_default', 'bar' => false ];
 
 
     public ?Arguments $args = null;

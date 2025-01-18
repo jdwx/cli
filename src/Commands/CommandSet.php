@@ -20,8 +20,8 @@ class CommandSet extends Command {
 
 
     protected function run( Arguments $args ) : void {
-        $stKey = $args->shiftStringEx();
-        $stValue = $args->endWithString();
+        $stKey = $args->shiftStringEx( "Missing variable name" );
+        $stValue = $args->endWithStringEx( "Missing value" );
         $this->cli()->setVariable( $stKey, $stValue );
     }
 

@@ -8,6 +8,7 @@ namespace JDWX\CLI\Commands;
 
 
 use JDWX\Args\Arguments;
+use JDWX\Args\BadArgumentException;
 use JDWX\CLI\Command;
 
 
@@ -29,6 +30,7 @@ class CommandExpr extends Command {
             "-" => $f1 - $f2,
             "*" => $f1 * $f2,
             "/" => $f1 / $f2,
+            default => throw new BadArgumentException( $op, "Invalid operator." ),
         };
         echo $fResult . "\n";
     }

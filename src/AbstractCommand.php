@@ -8,10 +8,8 @@ namespace JDWX\CLI;
 
 
 use JDWX\App\TRelayLogger;
+use JDWX\Args\ArgumentException;
 use JDWX\Args\Arguments;
-use JDWX\Args\BadArgumentException;
-use JDWX\Args\ExtraArgumentsException;
-use JDWX\Args\MissingArgumentException;
 use LogicException;
 use Psr\Log\LoggerInterface;
 use Stringable;
@@ -49,12 +47,10 @@ abstract class AbstractCommand implements LoggerInterface {
     public const HISTORY = true;
 
 
-    private Interpreter $cli;
     private ?array $nrOptions = null;
 
 
-    public function __construct( Interpreter $i_cli ) {
-        $this->cli = $i_cli;
+    public function __construct( private readonly Interpreter $cli ) {
     }
 
 
@@ -111,7 +107,7 @@ abstract class AbstractCommand implements LoggerInterface {
      * we are able to find and update those.
      */
     protected function handleOptions( Arguments $io_args ) : void {
-        $this->nrOptions = $io_args->handleOptionsDefined( array_keys( static::OPTIONS ) );
+        $this->nrOptions = $io_args->handleOptionsDefined( static::OPTIONS );
     }
 
 
@@ -123,35 +119,10 @@ abstract class AbstractCommand implements LoggerInterface {
         assert( method_exists( $this, "run" ), "Command " . static::COMMAND . " has no run method." );
         try {
             $this->run( $args );
-        } catch ( BadArgumentException $ex ) {
-            $this->error( $ex->getMessage() . " \"" . $ex->getValue() . "\"", [
-                "class" => $ex::class,
-                "code" => $ex->getCode(),
-                "file" => $ex->getFile(),
-                "line" => $ex->getLine(),
-                "value" => $ex->getValue(),
-            ] );
-            if ( is_string( static::HELP ) ) {
-                echo "Usage: " . $this->getUsage(), "\n";
+        } catch ( ArgumentException $ex ) {
+            if ( ! $this->cli()->handleArgumentException( $ex ) ) {
+                throw $ex;
             }
-        } catch ( ExtraArgumentsException $ex ) {
-            $this->error( $ex->getMessage(), [
-                "class" => $ex::class,
-                "code" => $ex->getCode(),
-                "file" => $ex->getFile(),
-                "line" => $ex->getLine(),
-                "args" => $ex->getArguments(),
-            ]);
-            if ( is_string( static::HELP ) ) {
-                echo "Usage: " . $this->getUsage(), "\n";
-            }
-        } catch ( MissingArgumentException $ex ) {
-            $this->error( $ex->getMessage(), [
-                "class" => $ex::class,
-                "code" => $ex->getCode(),
-                "file" => $ex->getFile(),
-                "line" => $ex->getLine(),
-            ]);
             if ( is_string( static::HELP ) ) {
                 echo "Usage: " . $this->getUsage(), "\n";
             }

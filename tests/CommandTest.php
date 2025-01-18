@@ -27,19 +27,35 @@ class CommandTest extends TestCase {
     }
 
 
-    public function testCheckOption() : void {
+    public function testCheckOptionForDefaultValue() : void {
         $cli = new MyTestInterpreter();
-
-        $args = new Arguments([]);
+        $args = new Arguments( [] );
         $command = new MyTestCommand( $cli );
         $command->runOuter( $args );
         self::assertTrue( $command->checkOptionRelay( 'foo', 'foo_default' ) );
+    }
 
+
+    public function testCheckOptionForTrueValueOnStringOption() : void {
+        $cli = new MyTestInterpreter();
         $args = new Arguments( [ '--foo' ] );
         $command = new MyTestCommand( $cli );
         $command->runOuter( $args );
-        self::assertTrue( $command->checkOptionRelay( 'foo', true ) );
+        self::assertTrue( $command->checkOptionRelay( 'foo', 'foo_default' ) );
+    }
 
+
+    public function testCheckOptionForTrueValueOnBooleanOption() : void {
+        $cli = new MyTestInterpreter();
+        $args = new Arguments( [ '--bar' ] );
+        $command = new MyTestCommand( $cli );
+        $command->runOuter( $args );
+        self::assertTrue( $command->checkOptionRelay( 'bar', true ) );
+    }
+
+
+    public function testCheckOptionForStringValue() : void {
+        $cli = new MyTestInterpreter();
         $args = new Arguments( [ '--foo=bar' ] );
         $command = new MyTestCommand( $cli );
         $command->runOuter( $args );

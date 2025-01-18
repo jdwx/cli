@@ -9,7 +9,10 @@ namespace JDWX\CLI;
 
 use Exception;
 use JDWX\App\InteractiveApplication;
+use JDWX\Args\ArgumentException;
 use JDWX\Args\Arguments;
+use JDWX\Args\BadArgumentException;
+use JDWX\Args\ExtraArgumentsException;
 use JDWX\Args\ParsedString;
 use JDWX\Args\StringParser;
 use Psr\Log\LoggerInterface;
@@ -92,6 +95,30 @@ class BaseInterpreter extends InteractiveApplication {
             return;
         }
         $this->handleCommandParsedString( $parsedString );
+    }
+
+
+    /**
+     * We're going to peel out argument-related exceptions so we can
+     * recover them and keep going.
+     */
+    public function handleArgumentException( Exception $i_ex ) : bool {
+        if ( ! $i_ex instanceof ArgumentException ) {
+            return false;
+        }
+
+        $r = \JDWX\App\Application::throwableToArray( $i_ex );
+        $stMessage = $r[ 'message' ];
+        unset( $r[ 'message' ] );
+
+        if ( $i_ex instanceof BadArgumentException ) {
+            $r[ 'value' ] = $i_ex->getValue();
+        } elseif ( $i_ex instanceof ExtraArgumentsException ) {
+            $r[ 'extra' ] = $i_ex->getArguments();
+        }
+
+        $this->error( $stMessage, $r );
+        return true;
     }
 
 
@@ -195,7 +222,9 @@ class BaseInterpreter extends InteractiveApplication {
      * easiest to provide in the form CommandClassName::class.
      */
     protected function addCommandClass( string $i_stCommandClass ) : void {
+        assert( is_a( $i_stCommandClass, AbstractCommand::class, true ) );
         $cmd = new $i_stCommandClass( $this );
+        /** @phpstan-ignore-next-line */
         assert( $cmd instanceof AbstractCommand );
         $this->addCommand( $cmd->getCommand(), $cmd, $cmd->getHelp(), $cmd->getUsage() );
         foreach ( $cmd->getAliases() as $stAlias ) {
@@ -286,8 +315,9 @@ class BaseInterpreter extends InteractiveApplication {
     }
 
 
-    protected function readLine( ?string $i_stPrompt = null ) : bool|string {
-        return parent::readLine( $i_stPrompt ?? $this->stPrompt );
+    /** @noinspection PhpParameterNameChangedDuringInheritanceInspection */
+    protected function readLine( ?string $i_nstPrompt = null ) : false|string {
+        return parent::readLine( $i_nstPrompt ?? $this->stPrompt );
     }
 
 
@@ -318,8 +348,9 @@ class BaseInterpreter extends InteractiveApplication {
                 $this->rHistory = array_slice( $this->rHistory, -$this->uHistoryLength, preserve_keys: true );
             }
         } catch ( Exception $ex ) {
-            $this->error( 'EXCEPTION: ' . get_class( $ex ) . ': ' . $ex->getMessage() );
-            echo $ex->getTraceAsString(), "\n";
+            if ( ! $this->handleArgumentException( $ex ) ) {
+                throw $ex;
+            }
         }
 
     }
