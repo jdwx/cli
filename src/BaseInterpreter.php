@@ -109,7 +109,7 @@ class BaseInterpreter extends InteractiveApplication {
             return false;
         }
 
-        $r = \JDWX\App\Application::throwableToArray( $i_ex );
+        $r = \JDWX\App\Application::throwableToArray( $i_ex, false );
         $stMessage = $r[ 'message' ];
         unset( $r[ 'message' ] );
 
