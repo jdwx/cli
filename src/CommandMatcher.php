@@ -10,6 +10,11 @@ namespace JDWX\CLI;
 final class CommandMatcher {
 
 
+    /**
+     * @param string[] $i_rInput
+     * @param string[] $i_rCommands
+     * @return string[]
+     */
     public static function match( array $i_rInput, array $i_rCommands ) : array {
         $rMatches = $i_rCommands;
         foreach ( $i_rInput as $ii => $argInput ) {
@@ -38,6 +43,10 @@ final class CommandMatcher {
      *
      * Winnow can't help you with partial matches of commands that are the same length. For example,
      * if the input is "foo ba" and the commands are "foo bar" and "foo baz", then you're out of luck.
+     *
+     * @param string[] $i_rInput
+     * @param string[] $i_rCommands
+     * @return string[]
      */
     public static function winnow( array $i_rInput, array $i_rCommands ) : array {
         $rMatches = $i_rCommands;
@@ -57,6 +66,11 @@ final class CommandMatcher {
     }
 
 
+    /**
+     * @param string[] $i_rInput
+     * @param string[] $i_rCommand
+     * @return int
+     */
     public static function winnowScore( array $i_rInput, array $i_rCommand ) : int {
         $uInputLen = count( $i_rInput );
         $uCommandLen = count( $i_rCommand );

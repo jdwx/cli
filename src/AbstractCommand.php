@@ -47,6 +47,7 @@ abstract class AbstractCommand implements LoggerInterface {
     public const HISTORY = true;
 
 
+    /** @var array<string, mixed>|null */
     private ?array $nrOptions = null;
 
 
@@ -70,6 +71,11 @@ abstract class AbstractCommand implements LoggerInterface {
     }
 
 
+    /**
+     * @return list<string> Aliases for this command
+     * @suppress PhanTypeMismatchReturn Phan doesn't know the type might change
+     * in subclasses.
+     */
     public function getAliases() : array {
         if ( is_array( static::ALIASES ) ) {
             return static::ALIASES;
@@ -140,19 +146,28 @@ abstract class AbstractCommand implements LoggerInterface {
     }
 
 
-    /** @deprecated Remove at 1.1.0. */
+    /**
+     * @param array<string, mixed> $i_rContext
+     * @deprecated Remove at 1.1.0.
+     */
     protected function logError( string|Stringable $i_stError, array $i_rContext = [] ) : void {
         $this->cli()->error( $i_stError, $i_rContext );
     }
 
 
-    /** @deprecated Remove at 1.1.0. */
+    /**
+     * @param array<string, mixed> $i_rContext
+     * @deprecated Remove at 1.1.0.
+     */
     protected function logInfo( string|Stringable $i_stInfo, array $i_rContext = [] ) : void {
         $this->cli()->info( $i_stInfo, $i_rContext );
     }
 
 
-    /** @deprecated Remove at 1.1.0. */
+    /**
+     * @param array<string, mixed> $i_rContext
+     * @deprecated Remove at 1.1.0.
+     */
     protected function logWarning( string $i_stWarning, array $i_rContext = [] ) : void {
         $this->cli()->warning( $i_stWarning, $i_rContext );
     }

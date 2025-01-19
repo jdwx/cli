@@ -25,8 +25,10 @@ class BaseInterpreter extends InteractiveApplication {
 
     protected bool $bContinue;
 
+    /** @var array<string, string|AbstractCommand> */
     protected array $commands = [];
 
+    /** @var array<string, string> */
     protected array $help = [];
 
     protected string $stPrompt;
@@ -123,9 +125,16 @@ class BaseInterpreter extends InteractiveApplication {
 
 
     /**
-     * @noinspection PhpUnusedParameterInspection The _stText parameter contains only the current word,
-     * which is not useful for our multi-word command completion. The readlineInfo() contains better
-     * information about the full entry so far, so we'll ignore the first parameter and use that instead.
+     * @param string $_stText Unused. Required by the readline completion
+     *                        function signature.
+     * @param int $i_nIndex How far into the text we are.
+     * @return string[] The completion options.
+     *
+     * @noinspection PhpUnusedParameterInspection The _stText parameter
+     * contains only the current word, which is not useful for our multi-word
+     * command completion. The readlineInfo() contains better information
+     * about the full entry so far, so we'll ignore the first parameter and
+     * use that instead.
      */
     public function readlineCompletion( string $_stText, int $i_nIndex ) : array {
         # This prevents readline from ever looking at filenames as an autocomplete option.
@@ -167,7 +176,7 @@ class BaseInterpreter extends InteractiveApplication {
 
 
     /**
-     * @param array|null $i_rstCommands
+     * @param list<string>|null $i_rstCommands
      * @return void
      *
      * Show help for the given commands. If no commands are given, show help for all commands.
@@ -323,7 +332,7 @@ class BaseInterpreter extends InteractiveApplication {
 
     /**
      * @param string $i_stCommand Which command to execute.
-     * @param array $args The arguments to the command.
+     * @param string[] $args The arguments to the command.
      * @param string $i_stOriginal The full command line to be added to history on success.
      * @return void
      *

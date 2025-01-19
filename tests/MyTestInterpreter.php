@@ -20,6 +20,8 @@ class MyTestInterpreter extends Interpreter {
     public int $end = 3;
     public ?int $status = null;
     public ?Exception $ex = null;
+
+    /** @var string[] */
     public array $readLines = [];
 
 
