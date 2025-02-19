@@ -125,19 +125,34 @@ abstract class AbstractCommand implements LoggerInterface {
         assert( method_exists( $this, "run" ), "Command " . static::COMMAND . " has no run method." );
         try {
             $this->run( $args );
-        } catch ( ArgumentException $ex ) {
-            if ( ! $this->cli()->handleArgumentException( $ex ) ) {
-                throw $ex;
+        } catch ( \Exception $ex ) {
+            if ( $this->handleException( $ex ) ) {
+                return;
             }
-            if ( is_string( static::HELP ) ) {
-                echo "Usage: " . $this->getUsage(), "\n";
-            }
+            throw $ex;
         }
     }
 
 
     protected function cli() : Interpreter {
         return $this->cli;
+    }
+
+
+    /**
+     * This is a hook for subclasses to catch recoverable exceptions that
+     * occur while running the command that they can recover from. Always
+     * call parent::handleException() if you override this method to get
+     * clean handling of argument exceptions.
+     */
+    protected function handleException( \Exception $i_ex ) : bool {
+        if ( $i_ex instanceof ArgumentException && $this->cli()->handleArgumentException( $i_ex ) ) {
+            if ( is_string( static::HELP ) ) {
+                echo "Usage: " . $this->getUsage(), "\n";
+            }
+            return true;
+        }
+        return false;
     }
 
 
