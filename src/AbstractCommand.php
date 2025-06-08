@@ -7,11 +7,12 @@ declare( strict_types = 1 );
 namespace JDWX\CLI;
 
 
-use JDWX\App\TRelayLogger;
+use Exception;
 use JDWX\Args\ArgumentException;
 use JDWX\Args\Arguments;
 use LogicException;
 use Psr\Log\LoggerInterface;
+use Psr\Log\LoggerTrait;
 use Stringable;
 
 
@@ -29,15 +30,19 @@ use Stringable;
 abstract class AbstractCommand implements LoggerInterface {
 
 
-    use TRelayLogger;
+    use LoggerTrait;
 
 
     protected const COMMAND = "____OVERLOAD_ME____";
+
     protected const ALIASES = [];
-    protected const HELP = null;
-    protected const USAGE = null;
+
+    protected const HELP    = null;
+
+    protected const USAGE   = null;
+
     protected const OPTIONS = [
-        /** If options are used they are of the form "key" => "default_value". */
+        /** If options are used, they are of the form "key" => "default_value". */
     ];
 
     /**
@@ -51,23 +56,11 @@ abstract class AbstractCommand implements LoggerInterface {
     private ?array $nrOptions = null;
 
 
-    public function __construct( private readonly Interpreter $cli ) {
-    }
+    public function __construct( private readonly Interpreter $cli ) {}
 
 
     public function askYN( string $i_stPrompt ) : bool {
         return $this->cli()->askYN( $i_stPrompt );
-    }
-
-
-    protected function checkOption( string $i_stOption, bool|string $i_bstFlag ) : bool {
-        if ( ! array_key_exists( $i_stOption, static::OPTIONS ) ) {
-            throw new LogicException( "Option {$i_stOption} checked not defined." );
-        }
-        if ( is_null( $this->nrOptions ) ) {
-            throw new LogicException( "Options checked but not yet handled." );
-        }
-        return ( $this->nrOptions[ $i_stOption ] ?? static::OPTIONS[ $i_stOption ] ) === $i_bstFlag;
     }
 
 
@@ -107,13 +100,8 @@ abstract class AbstractCommand implements LoggerInterface {
     }
 
 
-    /**
-     * This arguably should be called automatically from runOuter, but some existing commands that
-     * use this code expect that it hasn't been. This may change in the future after
-     * we are able to find and update those.
-     */
-    protected function handleOptions( Arguments $io_args ) : void {
-        $this->nrOptions = $io_args->handleOptionsDefined( static::OPTIONS );
+    public function log( mixed $level, string|Stringable $message, array $context = [] ) : void {
+        $this->cli()->log( $level, $message, $context );
     }
 
 
@@ -125,12 +113,23 @@ abstract class AbstractCommand implements LoggerInterface {
         assert( method_exists( $this, "run" ), "Command " . static::COMMAND . " has no run method." );
         try {
             $this->run( $args );
-        } catch ( \Exception $ex ) {
+        } catch ( Exception $ex ) {
             if ( $this->handleException( $ex ) ) {
                 return;
             }
             throw $ex;
         }
+    }
+
+
+    protected function checkOption( string $i_stOption, bool|string $i_bstFlag ) : bool {
+        if ( ! array_key_exists( $i_stOption, static::OPTIONS ) ) {
+            throw new LogicException( "Option {$i_stOption} checked not defined." );
+        }
+        if ( is_null( $this->nrOptions ) ) {
+            throw new LogicException( "Options checked but not yet handled." );
+        }
+        return ( $this->nrOptions[ $i_stOption ] ?? static::OPTIONS[ $i_stOption ] ) === $i_bstFlag;
     }
 
 
@@ -145,7 +144,7 @@ abstract class AbstractCommand implements LoggerInterface {
      * call parent::handleException() if you override this method to get
      * clean handling of argument exceptions.
      */
-    protected function handleException( \Exception $i_ex ) : bool {
+    protected function handleException( Exception $i_ex ) : bool {
         if ( $i_ex instanceof ArgumentException && $this->cli()->handleArgumentException( $i_ex ) ) {
             if ( is_string( static::HELP ) ) {
                 echo "Usage: " . $this->getUsage(), "\n";
@@ -156,8 +155,13 @@ abstract class AbstractCommand implements LoggerInterface {
     }
 
 
-    public function log( mixed $level, string|Stringable $message, array $context = [] ) : void {
-        $this->cli()->log( $level, $message, $context );
+    /**
+     * This arguably should be called automatically from runOuter, but some existing commands that
+     * use this code expect that it hasn't been. This may change in the future after
+     * we are able to find and update those.
+     */
+    protected function handleOptions( Arguments $io_args ) : void {
+        $this->nrOptions = $io_args->handleOptionsDefined( static::OPTIONS );
     }
 
 

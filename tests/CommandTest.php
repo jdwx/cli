@@ -4,14 +4,13 @@
 declare( strict_types = 1 );
 
 
-use JDWX\App\BufferLogger;
 use JDWX\Args\Arguments;
+use JDWX\Log\BufferLogger;
 use PHPUnit\Framework\TestCase;
 
 
 require __DIR__ . '/MyTestCommand.php';
 require __DIR__ . '/MyTestInterpreter.php';
-
 
 
 class CommandTest extends TestCase {
@@ -36,21 +35,11 @@ class CommandTest extends TestCase {
     }
 
 
-    public function testCheckOptionForTrueValueOnStringOption() : void {
+    public function testCheckOptionForNotDefined() : void {
         $cli = new MyTestInterpreter();
-        $args = new Arguments( [ '--foo' ] );
         $command = new MyTestCommand( $cli );
-        $command->runOuter( $args );
-        self::assertTrue( $command->checkOptionRelay( 'foo', 'foo_default' ) );
-    }
-
-
-    public function testCheckOptionForTrueValueOnBooleanOption() : void {
-        $cli = new MyTestInterpreter();
-        $args = new Arguments( [ '--bar' ] );
-        $command = new MyTestCommand( $cli );
-        $command->runOuter( $args );
-        self::assertTrue( $command->checkOptionRelay( 'bar', true ) );
+        self::expectException( LogicException::class );
+        $command->checkOptionRelay( 'bar', 'baz' );
     }
 
 
@@ -63,14 +52,6 @@ class CommandTest extends TestCase {
     }
 
 
-    public function testCheckOptionForNotDefined() : void {
-        $cli = new MyTestInterpreter();
-        $command = new MyTestCommand( $cli );
-        self::expectException( LogicException::class );
-        $command->checkOptionRelay( 'bar', 'baz' );
-    }
-
-
     public function testCheckOptionForTooEarly() : void {
         $cli = new MyTestInterpreter();
         $command = new MyTestCommand( $cli );
@@ -79,25 +60,43 @@ class CommandTest extends TestCase {
     }
 
 
-    public function testRun() : void {
+    public function testCheckOptionForTrueValueOnBooleanOption() : void {
         $cli = new MyTestInterpreter();
+        $args = new Arguments( [ '--bar' ] );
         $command = new MyTestCommand( $cli );
-        $args = new Arguments([ 'foo', 'bar' ]);
         $command->runOuter( $args );
-        self::assertSame( $args, $command->args );
+        self::assertTrue( $command->checkOptionRelay( 'bar', true ) );
+    }
+
+
+    public function testCheckOptionForTrueValueOnStringOption() : void {
+        $cli = new MyTestInterpreter();
+        $args = new Arguments( [ '--foo' ] );
+        $command = new MyTestCommand( $cli );
+        $command->runOuter( $args );
+        self::assertTrue( $command->checkOptionRelay( 'foo', 'foo_default' ) );
     }
 
 
     public function testMissingArgument() : void {
         $log = new BufferLogger();
         $cli = new MyTestInterpreter( i_log: $log );
-        $command = new MyTestCommand( $cli, function( Arguments $args ) {
+        $command = new MyTestCommand( $cli, function ( Arguments $args ) {
             $args->shiftStringEx();
-        });
-        $args = new Arguments([]);
+        } );
+        $args = new Arguments( [] );
         $command->runOuter( $args );
         $le = $log->shiftLog();
         self::assertSame( 'Missing argument', $le->message );
+    }
+
+
+    public function testRun() : void {
+        $cli = new MyTestInterpreter();
+        $command = new MyTestCommand( $cli );
+        $args = new Arguments( [ 'foo', 'bar' ] );
+        $command->runOuter( $args );
+        self::assertSame( $args, $command->args );
     }
 
 

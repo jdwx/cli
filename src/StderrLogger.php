@@ -9,6 +9,8 @@ namespace JDWX\CLI;
 
 /**
  * @deprecated Use JDWX\App\StderrLogger directly.
+ * @suppress PhanDeprecatedClass
+ * @noinspection PhpDeprecationInspection
  *
  * This is only here for backwards compatibility; the StderrLogger class
  * moved to the JDWX\App package.

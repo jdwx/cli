@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-use JDWX\App\BufferLogger;
+use JDWX\Log\BufferLogger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 
@@ -93,9 +93,9 @@ class InterpreterTest extends TestCase {
     public function testShowHelp() : void {
         $cli = new MyTestInterpreter();
         ob_start();
-        $cli->showHelp([ 'echo' ]);
+        $cli->showHelp( [ 'echo' ] );
         $st = ob_get_clean();
-        self::assertStringContainsString( 'Echo the arguments', $st);
+        self::assertStringContainsString( 'Echo the arguments', $st );
     }
 
 
