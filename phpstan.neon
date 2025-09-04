@@ -5,3 +5,4 @@ parameters:
 		- tests
 	scanDirectories:
 		- vendor
+	treatPhpDocTypesAsCertain: false
