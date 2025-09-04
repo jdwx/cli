@@ -50,17 +50,33 @@ class BaseInterpreter extends InteractiveApplication {
     }
 
 
-    protected function activate() : void {
-        $fn = function ( string $i_stText, int $i_nIndex ) : array {
-            return $this->readlineCompletion( $i_stText, $i_nIndex );
-        };
-        $this->readlineCompletionFunction( $fn );
-    }
-
-
     /** @return string[] */
     public function getHistory() : array {
         return $this->rHistory;
+    }
+
+
+    /**
+     * We're going to peel out argument-related exceptions so we can
+     * recover them and keep going.
+     */
+    public function handleArgumentException( Exception $i_ex ) : bool {
+        if ( ! $i_ex instanceof ArgumentException ) {
+            return false;
+        }
+
+        $r = \JDWX\App\Application::throwableToArray( $i_ex, false );
+        $stMessage = $r[ 'message' ];
+        unset( $r[ 'message' ] );
+
+        if ( $i_ex instanceof BadArgumentException ) {
+            $r[ 'value' ] = $i_ex->getValue();
+        } elseif ( $i_ex instanceof ExtraArgumentsException ) {
+            $r[ 'extra' ] = $i_ex->getArguments();
+        }
+
+        $this->error( $stMessage, $r );
+        return true;
     }
 
 
@@ -101,30 +117,6 @@ class BaseInterpreter extends InteractiveApplication {
 
 
     /**
-     * We're going to peel out argument-related exceptions so we can
-     * recover them and keep going.
-     */
-    public function handleArgumentException( Exception $i_ex ) : bool {
-        if ( ! $i_ex instanceof ArgumentException ) {
-            return false;
-        }
-
-        $r = \JDWX\App\Application::throwableToArray( $i_ex, false );
-        $stMessage = $r[ 'message' ];
-        unset( $r[ 'message' ] );
-
-        if ( $i_ex instanceof BadArgumentException ) {
-            $r[ 'value' ] = $i_ex->getValue();
-        } elseif ( $i_ex instanceof ExtraArgumentsException ) {
-            $r[ 'extra' ] = $i_ex->getArguments();
-        }
-
-        $this->error( $stMessage, $r );
-        return true;
-    }
-
-
-    /**
      * @param string $_stText Unused. Required by the readline completion
      *                        function signature.
      * @param int $i_nIndex How far into the text we are.
@@ -151,13 +143,13 @@ class BaseInterpreter extends InteractiveApplication {
                 }
                 $st = substr( $stCommand, $i_nIndex );
                 $rMatches[] = $st;
-                if ( str_contains( $st, " " ) ) {
-                    $st = substr( $st, 0, strpos( $st, " " ) );
+                if ( str_contains( $st, ' ' ) ) {
+                    $st = substr( $st, 0, strpos( $st, ' ' ) );
                 }
                 $rWordMatches[] = $st;
             }
         }
-        if ( 1 == count( $rMatches ) && $rCommands ) {
+        if ( $rCommands && 1 === count( $rMatches ) ) {
             echo "\n";
             $this->showHelp( $rCommands );
             $this->readlineRedisplay();
@@ -198,6 +190,14 @@ class BaseInterpreter extends InteractiveApplication {
         foreach ( $keys as $key ) {
             echo $key, "\n", str_pad( $rHelp[ $key ], 80, ' ', STR_PAD_LEFT ), "\n";
         }
+    }
+
+
+    protected function activate() : void {
+        $fn = function ( string $i_stText, int $i_nIndex ) : array {
+            return $this->readlineCompletion( $i_stText, $i_nIndex );
+        };
+        $this->readlineCompletionFunction( $fn );
     }
 
 
@@ -252,21 +252,21 @@ class BaseInterpreter extends InteractiveApplication {
     protected function handleCommandParsedString( ParsedString $i_command ) : void {
 
         $args = $i_command->getSegments();
-        if ( 0 == count( $args ) ) {
+        if ( 0 === count( $args ) ) {
             # This was a whole-line comment. (Truly empty lines were already handled.)
             return;
         }
         $st = implode( ' ', $args );
         $rMatches = CommandMatcher::match( $args, array_keys( $this->commands ) );
-        $this->debug( "matches = " . json_encode( $rMatches ) );
-        if ( 0 == count( $rMatches ) ) {
+        $this->debug( 'matches = ' . json_encode( $rMatches, JSON_THROW_ON_ERROR ) );
+        if ( 0 === count( $rMatches ) ) {
             $this->error( "Unknown command: {$st}" );
             return;
         }
         if ( 1 < count( $rMatches ) ) {
             $rMatches = CommandMatcher::winnow( $args, $rMatches );
-            $this->debug( "winnow = " . json_encode( $rMatches ) );
-            if ( 0 == count( $rMatches ) ) {
+            $this->debug( 'winnow = ' . json_encode( $rMatches, JSON_THROW_ON_ERROR ) );
+            if ( 0 === count( $rMatches ) ) {
                 $this->error( "Invalid command: {$st}" );
                 return;
             }
@@ -280,7 +280,7 @@ class BaseInterpreter extends InteractiveApplication {
         $uCommandLength = count( explode( ' ', $stCommand ) );
         $args = array_slice( $args, $uCommandLength );
         $st = $stCommand . ' ' . $i_command->getOriginal( $uCommandLength );
-        if ( [ "?" ] == $args ) {
+        if ( [ '?' ] === $args ) {
             $this->showHelp( [ $stCommand ] );
             return;
         }
@@ -293,7 +293,7 @@ class BaseInterpreter extends InteractiveApplication {
         foreach ( explode( "\n", $stInput ) as $line ) {
             $line = trim( $line );
             # echo "line = \"", $line, "\"\n";
-            if ( $line == "" ) {
+            if ( '' === $line ) {
                 return;
             }
             $this->readlineAddHistory( $line );
