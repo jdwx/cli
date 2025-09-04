@@ -4,6 +4,10 @@
 declare( strict_types = 1 );
 
 
+namespace JDWX\CLI\Tests;
+
+
+use Exception;
 use JDWX\Args\Arguments;
 use JDWX\CLI\Interpreter;
 use Psr\Log\LoggerInterface;
@@ -16,9 +20,13 @@ class MyTestInterpreter extends Interpreter {
 
 
     public bool $yn = false;
+
     public string $lineBuffer = 'line_buffer';
+
     public int $end = 3;
+
     public ?int $status = null;
+
     public ?Exception $ex = null;
 
     /** @var string[] */

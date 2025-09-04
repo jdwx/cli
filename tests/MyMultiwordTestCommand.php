@@ -4,6 +4,9 @@
 declare( strict_types = 1 );
 
 
+namespace JDWX\CLI\Tests;
+
+
 use JDWX\Args\Arguments;
 use JDWX\CLI\AbstractCommand;
 

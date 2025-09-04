@@ -4,6 +4,9 @@
 declare( strict_types = 1 );
 
 
+namespace JDWX\CLI\Tests;
+
+
 use JDWX\Log\BufferLogger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
@@ -12,59 +15,59 @@ use Psr\Log\LogLevel;
 require_once __DIR__ . '/MyTestInterpreter.php';
 
 
-class InterpreterTest extends TestCase {
+final class InterpreterTest extends TestCase {
 
 
     public function testBackQuotes() : void {
         $cli = new MyTestInterpreter();
-        $cli->readLines = [ "echo `echo hello`" ];
+        $cli->readLines = [ 'echo `echo hello`' ];
         ob_start();
         $cli->run();
         $st = trim( ob_get_clean() );
-        self::assertSame( "hello", $st );
+        self::assertSame( 'hello', $st );
     }
 
 
     public function testEcho() : void {
         $cli = new MyTestInterpreter();
-        $cli->readLines = [ "echo hello" ];
+        $cli->readLines = [ 'echo hello' ];
         ob_start();
         $cli->run();
         $st = trim( ob_get_clean() );
-        self::assertSame( "hello", $st );
+        self::assertSame( 'hello', $st );
     }
 
 
     public function testExit() : void {
         $cli = new MyTestInterpreter();
-        $cli->readLines = [ "exit", "echo hello" ];
+        $cli->readLines = [ 'exit', 'echo hello' ];
         ob_start();
         $cli->run();
         $st = trim( ob_get_clean() );
-        self::assertSame( "", $st );
+        self::assertSame( '', $st );
     }
 
 
     public function testReadlineCompletionForAmbiguous() : void {
         $cli = new MyTestInterpreter();
-        $cli->lineBuffer = "e";
+        $cli->lineBuffer = 'e';
         $cli->end = strlen( $cli->lineBuffer );
-        $r = $cli->readlineCompletion( "unused", 0 );
+        $r = $cli->readlineCompletion( 'unused', 0 );
         self::assertCount( 3, $r );
-        self::assertSame( "echo", $r[ 0 ] );
-        self::assertSame( "exit", $r[ 1 ] );
-        self::assertSame( "expr", $r[ 2 ] );
+        self::assertSame( 'echo', $r[ 0 ] );
+        self::assertSame( 'exit', $r[ 1 ] );
+        self::assertSame( 'expr', $r[ 2 ] );
     }
 
 
     public function testReadlineCompletionForMultiword() : void {
         $cli = new MyTestInterpreter();
-        $cli->lineBuffer = "my multi";
+        $cli->lineBuffer = 'my multi';
         $cli->end = strlen( $cli->lineBuffer );
-        $r = $cli->readlineCompletion( "unused", 0 );
+        $r = $cli->readlineCompletion( 'unused', 0 );
         self::assertCount( 1, $r );
         $st = $r[ 0 ];
-        self::assertEquals( "my multiword test command", $st );
+        self::assertEquals( 'my multiword test command', $st );
     }
 
 
@@ -79,7 +82,7 @@ class InterpreterTest extends TestCase {
     public function testRunForAmbiguous() : void {
         $log = new BufferLogger();
         $cli = new MyTestInterpreter( i_log: $log );
-        $cli->readLines = [ "e" ];
+        $cli->readLines = [ 'e' ];
         ob_start();
         $cli->run();
         ob_end_clean();

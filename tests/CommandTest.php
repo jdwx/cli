@@ -4,8 +4,12 @@
 declare( strict_types = 1 );
 
 
+namespace JDWX\CLI\Tests;
+
+
 use JDWX\Args\Arguments;
 use JDWX\Log\BufferLogger;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 
 
@@ -13,7 +17,7 @@ require __DIR__ . '/MyTestCommand.php';
 require __DIR__ . '/MyTestInterpreter.php';
 
 
-class CommandTest extends TestCase {
+final class CommandTest extends TestCase {
 
 
     public function testAskYN() : void {
@@ -38,7 +42,7 @@ class CommandTest extends TestCase {
     public function testCheckOptionForNotDefined() : void {
         $cli = new MyTestInterpreter();
         $command = new MyTestCommand( $cli );
-        self::expectException( LogicException::class );
+        $this->expectException( LogicException::class );
         $command->checkOptionRelay( 'bar', 'baz' );
     }
 
@@ -55,7 +59,7 @@ class CommandTest extends TestCase {
     public function testCheckOptionForTooEarly() : void {
         $cli = new MyTestInterpreter();
         $command = new MyTestCommand( $cli );
-        self::expectException( LogicException::class );
+        $this->expectException( LogicException::class );
         $command->checkOptionRelay( 'foo', 'wont_work' );
     }
 

@@ -16,21 +16,23 @@ class CommandExpr extends Command {
 
 
     protected const COMMAND = 'expr';
-    protected const HELP = 'Evaluate a simple expression.';
-    protected const USAGE = 'expr <number> <operator> <number>';
+
+    protected const HELP    = 'Evaluate a simple expression.';
+
+    protected const USAGE   = 'expr <number> <operator> <number>';
 
 
     protected function run( Arguments $args ) : void {
         $f1 = $args->shiftFloatEx();
-        $rOperators = [ "+", "-", "*", "/" ];
+        $rOperators = [ '+', '-', '*', '/' ];
         $op = $args->shiftKeywordEx( $rOperators );
         $f2 = $args->shiftFloatEx();
-        $fResult = match( $op ) {
-            "+" => $f1 + $f2,
-            "-" => $f1 - $f2,
-            "*" => $f1 * $f2,
-            "/" => $f1 / $f2,
-            default => throw new BadArgumentException( $op, "Invalid operator." ),
+        $fResult = match ( $op ) {
+            '+' => $f1 + $f2,
+            '-' => $f1 - $f2,
+            '*' => $f1 * $f2,
+            '/' => $f1 / $f2,
+            default => throw new BadArgumentException( $op, 'Invalid operator.' ),
         };
         echo $fResult . "\n";
     }

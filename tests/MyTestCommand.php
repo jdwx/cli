@@ -4,6 +4,9 @@
 declare( strict_types = 1 );
 
 
+namespace JDWX\CLI\Tests;
+
+
 use JDWX\Args\Arguments;
 use JDWX\CLI\Command;
 use JDWX\CLI\Interpreter;
@@ -13,6 +16,7 @@ class MyTestCommand extends Command {
 
 
     protected const COMMAND = 'my';
+
     protected const OPTIONS = [ 'foo' => 'foo_default', 'bar' => false ];
 
 

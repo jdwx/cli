@@ -33,7 +33,7 @@ abstract class AbstractCommand implements LoggerInterface {
     use LoggerTrait;
 
 
-    protected const COMMAND = "____OVERLOAD_ME____";
+    protected const COMMAND = '____OVERLOAD_ME____';
 
     protected const ALIASES = [];
 
@@ -72,12 +72,14 @@ abstract class AbstractCommand implements LoggerInterface {
     public function getAliases() : array {
         if ( is_array( static::ALIASES ) ) {
             return static::ALIASES;
-        } elseif ( is_null( static::ALIASES ) ) {
+        }
+        if ( is_null( static::ALIASES ) ) {
             return [];
-        } elseif ( is_string( static::ALIASES ) ) {
+        }
+        if ( is_string( static::ALIASES ) ) {
             return [ static::ALIASES ];
         }
-        throw new LogicException( "ALIASES must be array, string, or null." );
+        throw new LogicException( 'ALIASES must be array, string, or null.' );
     }
 
 
@@ -92,7 +94,7 @@ abstract class AbstractCommand implements LoggerInterface {
 
 
     public function getUsage() : ?string {
-        $stUsage = static::USAGE ?? "";
+        $stUsage = static::USAGE ?? '';
         if ( ! str_starts_with( $stUsage, static::COMMAND ) ) {
             $stUsage = trim( static::COMMAND . ' ' . $stUsage );
         }
@@ -110,7 +112,7 @@ abstract class AbstractCommand implements LoggerInterface {
      * type of its argument. Users will frequently want to use a specific subclass of Arguments.
      */
     public function runOuter( Arguments $args ) : void {
-        assert( method_exists( $this, "run" ), "Command " . static::COMMAND . " has no run method." );
+        assert( method_exists( $this, 'run' ), 'Command ' . static::COMMAND . ' has no run method.' );
         try {
             $this->run( $args );
         } catch ( Exception $ex ) {
@@ -127,7 +129,7 @@ abstract class AbstractCommand implements LoggerInterface {
             throw new LogicException( "Option {$i_stOption} checked not defined." );
         }
         if ( is_null( $this->nrOptions ) ) {
-            throw new LogicException( "Options checked but not yet handled." );
+            throw new LogicException( 'Options checked but not yet handled.' );
         }
         return ( $this->nrOptions[ $i_stOption ] ?? static::OPTIONS[ $i_stOption ] ) === $i_bstFlag;
     }
@@ -147,7 +149,7 @@ abstract class AbstractCommand implements LoggerInterface {
     protected function handleException( Exception $i_ex ) : bool {
         if ( $i_ex instanceof ArgumentException && $this->cli()->handleArgumentException( $i_ex ) ) {
             if ( is_string( static::HELP ) ) {
-                echo "Usage: " . $this->getUsage(), "\n";
+                echo 'Usage: ' . $this->getUsage(), "\n";
             }
             return true;
         }

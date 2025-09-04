@@ -15,21 +15,24 @@ class CommandHistorySearch extends Command {
 
 
     protected const COMMAND = 'history search';
-    protected const HELP = 'Search command history.';
-    protected const USAGE = '<string>';
-    public const HISTORY = false;
+
+    protected const HELP    = 'Search command history.';
+
+    protected const USAGE   = '<string>';
+
+    public const    HISTORY = false;
 
 
     protected function run( Arguments $args ) : void {
-        $stSearch = $args->endWithStringEx( "Missing search string." );
+        $stSearch = $args->endWithStringEx( 'Missing search string.' );
         $rHistory = $this->cli()->getHistory();
-        $rMatches = array_filter( $rHistory, function ( $stCommand ) use ( $stSearch ) {
+        $rMatches = array_filter( $rHistory, static function ( $stCommand ) use ( $stSearch ) {
             return str_contains( $stCommand, $stSearch );
         } );
         $uCount = count( $rMatches );
-        echo "History has {$uCount} matching command", ($uCount == 1 ) ? "" : "s", ":\n";
+        echo "History has {$uCount} matching command", ( 1 === $uCount ) ? '' : 's', ":\n";
         foreach ( $rMatches as $uIndex => $stCommand ) {
-            $stIndex = str_pad( "$uIndex", 3, " ", STR_PAD_LEFT );
+            $stIndex = str_pad( "$uIndex", 3, ' ', STR_PAD_LEFT );
             echo "{$stIndex} {$stCommand}\n";
         }
     }

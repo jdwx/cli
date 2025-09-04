@@ -14,9 +14,11 @@ use JDWX\CLI\Command;
 class CommandHelp extends Command {
 
 
-    protected const COMMAND = "help";
-    protected const HELP = "Show available commands.";
-    protected const USAGE = "help [command...]";
+    protected const COMMAND = 'help';
+
+    protected const HELP    = 'Show available commands.';
+
+    protected const USAGE   = 'help [command...]';
 
 
     protected function run( Arguments $args ) : void {

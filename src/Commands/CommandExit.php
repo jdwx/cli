@@ -14,9 +14,11 @@ use JDWX\CLI\Command;
 class CommandExit extends Command {
 
 
-    protected const COMMAND = "exit";
-    protected const ALIASES = [ "quit" ];
-    protected const HELP = "Exit the program.";
+    protected const COMMAND = 'exit';
+
+    protected const ALIASES = [ 'quit' ];
+
+    protected const HELP    = 'Exit the program.';
 
 
     protected function run( Arguments $args ) : void {
