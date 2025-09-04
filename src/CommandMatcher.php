@@ -55,7 +55,9 @@ final class CommandMatcher {
         foreach ( $rMatches as $stCommand ) {
             $rCommand = preg_split( '/\s+/', $stCommand );
             $uMatchLen = self::winnowScore( $i_rInput, $rCommand );
-            if ( $uMatchLen < $uMaxMatchLen ) continue;
+            if ( $uMatchLen < $uMaxMatchLen ) {
+                continue;
+            }
             if ( $uMatchLen > $uMaxMatchLen ) {
                 $uMaxMatchLen = $uMatchLen;
                 $rNewMatches = [];
@@ -76,7 +78,7 @@ final class CommandMatcher {
         $uCommandLen = count( $i_rCommand );
         $uMatchLen = 0;
 
-        for ( $ii = 0; $ii < $uInputLen; $ii++ ) {
+        for ( $ii = 0 ; $ii < $uInputLen ; $ii++ ) {
             if ( $ii >= $uCommandLen ) {
                 # If the command is shorter than the input, we're done.
                 return $uMatchLen;
