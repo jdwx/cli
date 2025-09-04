@@ -11,7 +11,8 @@
     "php": ">=8.2.0",
     "ext-readline": "*",
     "jdwx/args": "^1.0",
-    "jdwx/app": "^1.0.4",
+    "jdwx/app": "^1.1.3",
+    "jdwx/strict": "^1.0.22",
     "psr/log": "^3.0",
     "ext-mbstring": "*"
   },
