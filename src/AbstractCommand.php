@@ -33,16 +33,17 @@ abstract class AbstractCommand implements LoggerInterface {
     use LoggerTrait;
 
 
-    protected const COMMAND = '____OVERLOAD_ME____';
+    protected const string COMMAND = '____OVERLOAD_ME____';
 
     /** @var list<string>|string|null */
-    protected const ALIASES = [];
+    protected const array|string|null ALIASES = [];
 
-    protected const HELP    = null;
+    protected const string|null       HELP    = null;
 
-    protected const USAGE   = null;
+    protected const string|null       USAGE   = null;
 
-    protected const OPTIONS = [
+    /** @var array<string, string|bool> */
+    protected const array             OPTIONS = [
         /** If options are used, they are of the form "key" => "default_value". */
     ];
 
@@ -50,7 +51,7 @@ abstract class AbstractCommand implements LoggerInterface {
      * If true, the command is added to history when run. This is almost always
      * desirable unless the command manipulates the history itself.
      */
-    public const HISTORY = true;
+    public const bool HISTORY = true;
 
 
     /** @var array<string, mixed>|null */

@@ -14,13 +14,13 @@ use JDWX\CLI\Command;
 class CommandHistorySearch extends Command {
 
 
-    protected const COMMAND = 'history search';
+    protected const string COMMAND = 'history search';
 
-    protected const HELP    = 'Search command history.';
+    protected const string HELP    = 'Search command history.';
 
-    protected const USAGE   = '<string>';
+    protected const string USAGE   = '<string>';
 
-    public const    HISTORY = false;
+    public const    bool   HISTORY = false;
 
 
     protected function run( Arguments $args ) : void {

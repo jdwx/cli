@@ -14,11 +14,11 @@ use JDWX\CLI\Command;
 class CommandEcho extends Command {
 
 
-    protected const COMMAND = 'echo';
+    protected const string COMMAND = 'echo';
 
-    protected const HELP    = 'Echo the arguments to the output stream.';
+    protected const string HELP    = 'Echo the arguments to the output stream.';
 
-    protected const USAGE   = 'echo <string>';
+    protected const string USAGE   = 'echo <string>';
 
 
     protected function run( Arguments $args ) : void {

@@ -7,8 +7,9 @@ It is designed to be easy to use and easy to extend and to provide features that
 be tedious to implement from scratch.
 
 It provides:
+
 * Command line editing through readline.
-* Command parser with support for single and double-quoted strings, escape sequences, and backquoted 
+* Command parser with support for single and double-quoted strings, escape sequences, and backquoted
   command substitution.
 * Variable substitution in command strings. (Supports both ${var} and $var syntax.)
 * Command autocompletion and context-aware help.
@@ -28,10 +29,9 @@ Or download the source from GitHub: https://github.com/jdwx/args.git
 
 ## Requirements
 
-This library requires PHP 8.2 or later with the readline extension. 
-It might work with earlier versions of PHP 8, but it has not been tested with them.
+This library requires PHP 8.3 or later with the readline extension.
 
-## Usage 
+## Usage
 
 Using this framework involves two steps:
 
@@ -40,12 +40,12 @@ Using this framework involves two steps:
    examples, aliases and (where applicable) predefined options. See the builtin commands
    for details.
 
-2) Subclass the Interpreter class and add your commands in the constructor with the 
-   addCommandClass() method. Instantiate your interpreter subclass and call the 
+2) Subclass the Interpreter class and add your commands in the constructor with the
+   addCommandClass() method. Instantiate your interpreter subclass and call the
    run() method to start the interpreter. The php_sh.php file in the bin directory
    provides a simple example of how to do this.
 
-Arguments are passed to the command using the [Arguments](https://github.com/jdwx/args) 
+Arguments are passed to the command using the [Arguments](https://github.com/jdwx/args)
 class. For complex applications, you may want to subclass Arguments to provide additional
 methods to handle types relevant to your application. If you do, it is generally helpful
 to create an abstract subclass of AbstractCommand that defines a signature for the run()
@@ -67,7 +67,7 @@ sufficient.
 ## Stability
 
 This framework is considered stable and is used in production code. However, it has
-been refactored and improved for general use, and those features may not be as 
+been refactored and improved for general use, and those features may not be as
 well-tested.
 
 ## History
@@ -75,11 +75,11 @@ well-tested.
 This framework has been in production for many years. It was refactored out of a larger
 codebase and released as an open-source standalone module in 2024.
 
-There is a method called addCommand() that is present for historical 
-reasons. It is used extensively in legacy code that implements commands 
-as methods of the Interpreter class instead of separate classes, 
-resulting in unmaintainable 10,000-line classes.  It is retained for 
-compatibility for now because refactoring those classes is exactly as quick 
-and pleasant as you'd expect (i.e., not at all). It absolutely 
+There is a method called addCommand() that is present for historical
+reasons. It is used extensively in legacy code that implements commands
+as methods of the Interpreter class instead of separate classes,
+resulting in unmaintainable 10,000-line classes. It is retained for
+compatibility for now because refactoring those classes is exactly as quick
+and pleasant as you'd expect (i.e., not at all). It absolutely
 **must not** be used in new code. We look forward to removing it someday.
 When that day arrives, no advance warning will be given.

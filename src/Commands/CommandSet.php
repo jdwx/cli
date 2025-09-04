@@ -14,11 +14,11 @@ use JDWX\CLI\Command;
 class CommandSet extends Command {
 
 
-    protected const COMMAND = 'set';
+    protected const string COMMAND = 'set';
 
-    protected const HELP    = 'Set a variable.';
+    protected const string HELP    = 'Set a variable.';
 
-    protected const USAGE   = 'set <variable> <value...>';
+    protected const string USAGE   = 'set <variable> <value...>';
 
 
     protected function run( Arguments $args ) : void {

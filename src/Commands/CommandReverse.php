@@ -18,9 +18,11 @@ use JDWX\CLI\Command;
 class CommandReverse extends Command {
 
 
-    protected const COMMAND = 'reverse';
-    protected const HELP = 'Reverse the arguments and echo them to the output stream.';
-    protected const USAGE = 'reverse <string>';
+    protected const string COMMAND = 'reverse';
+
+    protected const string HELP    = 'Reverse the arguments and echo them to the output stream.';
+
+    protected const string USAGE   = 'reverse <string>';
 
 
     protected function run( Arguments $args ) : void {

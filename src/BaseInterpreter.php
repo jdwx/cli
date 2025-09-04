@@ -8,6 +8,7 @@ namespace JDWX\CLI;
 
 
 use Exception;
+use JDWX\App\Application;
 use JDWX\App\InteractiveApplication;
 use JDWX\Args\ArgumentException;
 use JDWX\Args\Arguments;
@@ -66,7 +67,7 @@ class BaseInterpreter extends InteractiveApplication {
             return false;
         }
 
-        $r = \JDWX\App\Application::throwableToArray( $i_ex, false );
+        $r = Application::throwableToArray( $i_ex, false );
         $stMessage = $r[ 'message' ];
         unset( $r[ 'message' ] );
 

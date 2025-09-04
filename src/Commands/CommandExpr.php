@@ -15,11 +15,11 @@ use JDWX\CLI\Command;
 class CommandExpr extends Command {
 
 
-    protected const COMMAND = 'expr';
+    protected const string COMMAND = 'expr';
 
-    protected const HELP    = 'Evaluate a simple expression.';
+    protected const string HELP    = 'Evaluate a simple expression.';
 
-    protected const USAGE   = 'expr <number> <operator> <number>';
+    protected const string USAGE   = 'expr <number> <operator> <number>';
 
 
     protected function run( Arguments $args ) : void {

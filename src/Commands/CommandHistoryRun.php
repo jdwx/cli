@@ -14,10 +14,13 @@ use JDWX\CLI\Command;
 class CommandHistoryRun extends Command {
 
 
-    protected const COMMAND = 'history run';
-    protected const HELP = 'Run a command from the history.';
-    protected const USAGE = '<index>';
-    public const HISTORY = false;
+    protected const string COMMAND = 'history run';
+
+    protected const string HELP    = 'Run a command from the history.';
+
+    protected const string USAGE   = '<index>';
+
+    public const bool      HISTORY = false;
 
 
     protected function run( Arguments $args ) : void {
@@ -33,9 +36,6 @@ class CommandHistoryRun extends Command {
         $this->cli()->handleCommand( $stCommand );
 
     }
-
-
-
 
 
 }

@@ -14,7 +14,7 @@ use JDWX\CLI\AbstractCommand;
 class MyMultiwordTestCommand extends AbstractCommand {
 
 
-    protected const COMMAND = 'my multiword test command';
+    protected const string COMMAND = 'my multiword test command';
 
 
     protected function run( Arguments $args ) : void {
