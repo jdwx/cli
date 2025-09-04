@@ -35,6 +35,7 @@ abstract class AbstractCommand implements LoggerInterface {
 
     protected const COMMAND = '____OVERLOAD_ME____';
 
+    /** @var list<string>|string|null */
     protected const ALIASES = [];
 
     protected const HELP    = null;

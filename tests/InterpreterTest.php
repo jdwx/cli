@@ -8,6 +8,7 @@ namespace JDWX\CLI\Tests;
 
 
 use JDWX\Log\BufferLogger;
+use JDWX\Strict\OK;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 
@@ -23,7 +24,7 @@ final class InterpreterTest extends TestCase {
         $cli->readLines = [ 'echo `echo hello`' ];
         ob_start();
         $cli->run();
-        $st = trim( ob_get_clean() );
+        $st = trim( OK::ob_get_clean() );
         self::assertSame( 'hello', $st );
     }
 
@@ -33,7 +34,7 @@ final class InterpreterTest extends TestCase {
         $cli->readLines = [ 'echo hello' ];
         ob_start();
         $cli->run();
-        $st = trim( ob_get_clean() );
+        $st = trim( OK::ob_get_clean() );
         self::assertSame( 'hello', $st );
     }
 
@@ -43,7 +44,7 @@ final class InterpreterTest extends TestCase {
         $cli->readLines = [ 'exit', 'echo hello' ];
         ob_start();
         $cli->run();
-        $st = trim( ob_get_clean() );
+        $st = trim( OK::ob_get_clean() );
         self::assertSame( '', $st );
     }
 
@@ -97,7 +98,7 @@ final class InterpreterTest extends TestCase {
         $cli = new MyTestInterpreter();
         ob_start();
         $cli->showHelp( [ 'echo' ] );
-        $st = ob_get_clean();
+        $st = OK::ob_get_clean();
         self::assertStringContainsString( 'Echo the arguments', $st );
     }
 
@@ -107,7 +108,7 @@ final class InterpreterTest extends TestCase {
         $cli->readLines = [ 'set x 5', 'echo $x' ];
         ob_start();
         $cli->run();
-        $st = trim( ob_get_clean() );
+        $st = trim( OK::ob_get_clean() );
         self::assertSame( '5', $st );
         self::assertSame( '5', $cli->getVariable( 'x' ) );
     }

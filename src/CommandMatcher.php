@@ -7,20 +7,23 @@ declare( strict_types = 1 );
 namespace JDWX\CLI;
 
 
+use JDWX\Strict\OK;
+
+
 final class CommandMatcher {
 
 
     /**
-     * @param string[] $i_rInput
-     * @param string[] $i_rCommands
-     * @return string[]
+     * @param list<string> $i_rInput
+     * @param list<string> $i_rCommands
+     * @return list<string>
      */
     public static function match( array $i_rInput, array $i_rCommands ) : array {
         $rMatches = $i_rCommands;
         foreach ( $i_rInput as $ii => $argInput ) {
             $rNewMatches = [];
             foreach ( $rMatches as $stCommand ) {
-                $rCommand = preg_split( '/\s+/', $stCommand );
+                $rCommand = OK::preg_split_list( '/\s+/', $stCommand );
                 if ( $ii >= count( $rCommand ) ) {
                     $rNewMatches[] = $stCommand;
                     continue;
@@ -46,14 +49,14 @@ final class CommandMatcher {
      *
      * @param string[] $i_rInput
      * @param string[] $i_rCommands
-     * @return string[]
+     * @return list<string>
      */
     public static function winnow( array $i_rInput, array $i_rCommands ) : array {
         $rMatches = $i_rCommands;
         $rNewMatches = [];
         $uMaxMatchLen = 0;
         foreach ( $rMatches as $stCommand ) {
-            $rCommand = preg_split( '/\s+/', $stCommand );
+            $rCommand = OK::preg_split_list( '/\s+/', $stCommand );
             $uMatchLen = self::winnowScore( $i_rInput, $rCommand );
             if ( $uMatchLen < $uMaxMatchLen ) {
                 continue;

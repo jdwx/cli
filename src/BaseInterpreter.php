@@ -15,6 +15,7 @@ use JDWX\Args\BadArgumentException;
 use JDWX\Args\ExtraArgumentsException;
 use JDWX\Args\ParsedString;
 use JDWX\Args\StringParser;
+use JDWX\Strict\TypeIs;
 use Psr\Log\LoggerInterface;
 
 
@@ -144,6 +145,10 @@ class BaseInterpreter extends InteractiveApplication {
                 $st = substr( $stCommand, $i_nIndex );
                 $rMatches[] = $st;
                 if ( str_contains( $st, ' ' ) ) {
+                    /**
+                     * I literally just checked that.
+                     * @phpstan-ignore argument.type
+                     */
                     $st = substr( $st, 0, strpos( $st, ' ' ) );
                 }
                 $rWordMatches[] = $st;
@@ -251,7 +256,7 @@ class BaseInterpreter extends InteractiveApplication {
      */
     protected function handleCommandParsedString( ParsedString $i_command ) : void {
 
-        $args = $i_command->getSegments();
+        $args = TypeIs::listString( $i_command->getSegments() );
         if ( 0 === count( $args ) ) {
             # This was a whole-line comment. (Truly empty lines were already handled.)
             return;
@@ -284,7 +289,7 @@ class BaseInterpreter extends InteractiveApplication {
             $this->showHelp( [ $stCommand ] );
             return;
         }
-        $this->runCommand( $stCommand, $args, $st );
+        $this->runCommand( $stCommand, TypeIs::listString( $args ), $st );
     }
 
 
@@ -332,15 +337,15 @@ class BaseInterpreter extends InteractiveApplication {
 
     /**
      * @param string $i_stCommand Which command to execute.
-     * @param string[] $args The arguments to the command.
+     * @param list<string> $i_args The arguments to the command.
      * @param string $i_stOriginal The full command line to be added to history on success.
      * @return void
      *
      * Finds the implementation of a given command and runs it with the given arguments.
      */
-    protected function runCommand( string $i_stCommand, array $args, string $i_stOriginal ) : void {
+    protected function runCommand( string $i_stCommand, array $i_args, string $i_stOriginal ) : void {
         $method = $this->commands[ $i_stCommand ];
-        $args = $this->newArguments( $args );
+        $args = $this->newArguments( $i_args );
         try {
             $bHistory = true;
             if ( $method instanceof AbstractCommand ) {
