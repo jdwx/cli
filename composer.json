@@ -19,6 +19,13 @@
   "require-dev": {
     "roave/security-advisories": "dev-latest",
     "jetbrains/phpstorm-attributes": "^1.0",
-    "phpunit/phpunit": "^9.5"
+    "phan/phan": "^v6",
+    "phpstan/phpstan": "^2.0",
+    "phpunit/phpunit": "^12"
+  },
+  "scripts": {
+    "phan": "PHAN_ALLOW_XDEBUG=1 php -d xdebug.mode=off vendor/bin/phan --analyze-twice",
+    "phpstan": "phpstan",
+    "test": "vendor/bin/phpunit tests"
   }
 }
