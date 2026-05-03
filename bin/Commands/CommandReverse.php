@@ -27,7 +27,7 @@ class CommandReverse extends Command {
 
     protected function run( Arguments $args ) : void {
         $bFirst = true;
-        while ( $st = $args->shiftString() ) {
+        while ( null !== $st = $args->shiftString() ) {
             if ( ! $bFirst ) {
                 echo ' ';
             }
