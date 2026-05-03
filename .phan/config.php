@@ -24,5 +24,8 @@ return [
 	'generic_types_enabled'           => true,
 	'scalar_implicit_cast'            => false,
 
+	# Workaround for Phan #5528.
+	'suppress_issue_types' => [ 'PhanConstantTypeMismatchInheritance' ],
+
 ];
 
