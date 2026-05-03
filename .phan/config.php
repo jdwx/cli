@@ -6,6 +6,7 @@ return [
 	'target_php_version' => '8.4',
 
 	'directory_list' => [
+		'bin/',
 		'src/',
 		'tests/',
 		'vendor/',

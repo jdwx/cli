@@ -2,6 +2,7 @@ parameters:
 	level: 7
 	phpVersion: 80300
 	paths:
+		- bin
 		- src
 		- tests
 	scanDirectories:
