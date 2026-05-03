@@ -210,7 +210,9 @@ class BaseInterpreter extends InteractiveApplication {
 
     protected function activate() : void {
         $fn = function ( string $i_stText, int $i_nIndex ) : array {
+            // @codeCoverageIgnoreStart Can't be tested non-interactively.
             return $this->readlineCompletion( $i_stText, $i_nIndex );
+            // @codeCoverageIgnoreEnd
         };
         $this->readlineCompletionFunction( $fn );
     }
@@ -332,8 +334,10 @@ class BaseInterpreter extends InteractiveApplication {
             $rMatches = CommandMatcher::winnow( $args, $rMatches );
             $this->debug( 'winnow = ' . json_encode( $rMatches, JSON_THROW_ON_ERROR ) );
             if ( 0 === count( $rMatches ) ) {
+                // @codeCoverageIgnoreStart This *should* be unreachable.
                 $this->error( "Invalid command: {$st}" );
                 return;
+                // @codeCoverageIgnoreEnd
             }
             if ( 1 < count( $rMatches ) ) {
                 $this->warning( "Ambiguous command: {$st}" );
@@ -389,7 +393,10 @@ class BaseInterpreter extends InteractiveApplication {
     }
 
 
-    /** @noinspection PhpParameterNameChangedDuringInheritanceInspection */
+    /**
+     * @noinspection PhpParameterNameChangedDuringInheritanceInspection
+     * @codeCoverageIgnore Can't be tested non-interactively.
+     */
     protected function readLine( ?string $i_nstPrompt = null ) : false|string {
         return parent::readLine( $i_nstPrompt ?? $this->stPrompt );
     }
