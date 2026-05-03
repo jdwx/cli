@@ -7,8 +7,10 @@ declare( strict_types = 1 );
 namespace JDWX\CLI\Tests;
 
 
+use JDWX\CLI\Interpreter;
 use JDWX\Log\BufferLogger;
 use JDWX\Strict\OK;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 
@@ -16,6 +18,7 @@ use Psr\Log\LogLevel;
 require_once __DIR__ . '/MyTestInterpreter.php';
 
 
+#[CoversClass( Interpreter::class )]
 final class InterpreterTest extends TestCase {
 
 

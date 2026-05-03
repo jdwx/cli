@@ -8,8 +8,11 @@ namespace JDWX\CLI\Tests;
 
 
 use JDWX\Args\Arguments;
+use JDWX\CLI\AbstractCommand;
+use JDWX\CLI\Command;
 use JDWX\Log\BufferLogger;
 use LogicException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
@@ -17,6 +20,8 @@ require __DIR__ . '/MyTestCommand.php';
 require __DIR__ . '/MyTestInterpreter.php';
 
 
+#[CoversClass( AbstractCommand::class )]
+#[CoversClass( Command::class )]
 final class CommandTest extends TestCase {
 
 

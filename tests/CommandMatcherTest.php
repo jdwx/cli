@@ -8,9 +8,11 @@ namespace JDWX\CLI\Tests;
 
 
 use JDWX\CLI\CommandMatcher;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
+#[CoversClass( CommandMatcher::class )]
 final class CommandMatcherTest extends TestCase {
 
 
