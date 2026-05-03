@@ -33,7 +33,7 @@ abstract class AbstractCommand implements LoggerInterface {
     use LoggerTrait;
 
 
-    protected const string COMMAND = '____OVERLOAD_ME____';
+    protected const string COMMAND = BaseInterpreter::DEFAULT_COMMAND;
 
     /** @var list<string>|string|null */
     protected const array|string|null ALIASES = [];

@@ -9,6 +9,7 @@ namespace JDWX\CLI\Tests;
 
 use Exception;
 use JDWX\Args\Arguments;
+use JDWX\CLI\AbstractCommand;
 use JDWX\CLI\Interpreter;
 use Psr\Log\LoggerInterface;
 
@@ -39,6 +40,16 @@ class MyTestInterpreter extends Interpreter {
         }
         parent::__construct( $i_stPrompt, $i_argv, $i_log );
         $this->addCommandClass( MyMultiwordTestCommand::class );
+    }
+
+
+    public function addCommandObjectRelay( AbstractCommand $i_cmd ) : void {
+        parent::addCommandObject( $i_cmd );
+    }
+
+
+    public function addCommandRelay( string $i_stCommand, AbstractCommand|string $i_command, ?string $i_nstHelp = null, ?string $i_nstUsage = null ) : void {
+        parent::addCommand( $i_stCommand, $i_command, $i_nstHelp, $i_nstUsage );
     }
 
 

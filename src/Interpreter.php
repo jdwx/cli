@@ -9,14 +9,6 @@ namespace JDWX\CLI;
 
 use JDWX\Args\Arguments;
 use JDWX\Args\ParsedString;
-use JDWX\CLI\Commands\CommandEcho;
-use JDWX\CLI\Commands\CommandExit;
-use JDWX\CLI\Commands\CommandExpr;
-use JDWX\CLI\Commands\CommandHelp;
-use JDWX\CLI\Commands\CommandHistory;
-use JDWX\CLI\Commands\CommandHistoryRun;
-use JDWX\CLI\Commands\CommandHistorySearch;
-use JDWX\CLI\Commands\CommandSet;
 use Psr\Log\LoggerInterface;
 
 
@@ -30,14 +22,7 @@ class Interpreter extends BaseInterpreter {
     public function __construct( string           $i_stPrompt = '> ', array|Arguments|null $i_argv = null,
                                  ?LoggerInterface $i_log = null ) {
         parent::__construct( $i_stPrompt, $i_argv, $i_log );
-        $this->addCommandClass( CommandEcho::class );
-        $this->addCommandClass( CommandExit::class );
-        $this->addCommandClass( CommandExpr::class );
-        $this->addCommandClass( CommandHelp::class );
-        $this->addCommandClass( CommandHistory::class );
-        $this->addCommandClass( CommandHistoryRun::class );
-        $this->addCommandClass( CommandHistorySearch::class );
-        $this->addCommandClass( CommandSet::class );
+        $this->addCommandDirectory( 'JDWX\\CLI\\Commands', __DIR__ . '/Commands' );
         $fn = function ( string $i_stText, int $i_nIndex ) : array {
             return $this->readlineCompletion( $i_stText, $i_nIndex );
         };

@@ -4,7 +4,7 @@
 declare( strict_types = 1 );
 
 
-namespace JDWX\CLI\Commands;
+namespace JDWX\CLI\Bin\Commands;
 
 
 use JDWX\Args\Arguments;

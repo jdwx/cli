@@ -18,10 +18,13 @@ use JDWX\Args\ParsedString;
 use JDWX\Args\StringParser;
 use JDWX\Strict\TypeIs;
 use Psr\Log\LoggerInterface;
+use ReflectionClass;
 
 
 class BaseInterpreter extends InteractiveApplication {
 
+
+    public const string DEFAULT_COMMAND = '____OVERLOAD_ME____';
 
     public int $rc;
 
@@ -49,6 +52,11 @@ class BaseInterpreter extends InteractiveApplication {
                                  ?LoggerInterface $i_log = null ) {
         parent::__construct( $i_argv, $i_log );
         $this->stPrompt = $i_stPrompt;
+    }
+
+
+    protected static function commandToString( string|AbstractCommand $i_cmd ) : string {
+        return is_string( $i_cmd ) ? $i_cmd : $i_cmd::class;
     }
 
 
@@ -214,6 +222,12 @@ class BaseInterpreter extends InteractiveApplication {
     protected function addCommand( string  $i_stCommand, string|AbstractCommand $i_command,
                                    ?string $i_nstHelp = null,
                                    ?string $i_nstUsage = null ) : void {
+
+        if ( self::DEFAULT_COMMAND === $i_stCommand ) {
+            $stCommand = self::commandToString( $i_command );
+            throw new \InvalidArgumentException( "No command name provided for command '{$stCommand}'" );
+        }
+
         if ( ! is_string( $i_nstUsage ) ) {
             $i_nstUsage = $i_stCommand;
         }
@@ -221,6 +235,12 @@ class BaseInterpreter extends InteractiveApplication {
         if ( ! $i_nstHelp ) {
             $i_nstHelp = 'No help available.';
         }
+
+        if ( isset( $this->commands[ $i_stCommand ] ) ) {
+            $stCommand = self::commandToString( $i_command );
+            throw new \InvalidArgumentException( "Command '{$i_stCommand}' is already registered before {$stCommand}" );
+        }
+
         $this->commands[ $i_stCommand ] = $i_command;
         $this->help[ $i_nstUsage ] = $i_nstHelp;
 
@@ -241,9 +261,50 @@ class BaseInterpreter extends InteractiveApplication {
         $cmd = new $i_stCommandClass( $this );
         /** @phpstan-ignore-next-line */
         assert( $cmd instanceof AbstractCommand );
-        $this->addCommand( $cmd->getCommand(), $cmd, $cmd->getHelp(), $cmd->getUsage() );
-        foreach ( $cmd->getAliases() as $stAlias ) {
-            $this->addCommand( $stAlias, $cmd, $cmd->getHelp(), $cmd->getUsage() );
+        $this->addCommandObject( $cmd );
+    }
+
+
+    /**
+     * Auto-discover and register every concrete AbstractCommand subclass found
+     * in $i_stDirectory. The directory must follow PSR-4 such that each file's
+     * class autoloads based on its filename and the provided namespace.
+     *
+     * Files whose class is abstract, is a trait/interface, or doesn't extend
+     * AbstractCommand are skipped silently — so it's safe to leave shared
+     * base classes (e.g., CoreCommand) in the same directory.
+     */
+    protected function addCommandDirectory( string $i_stNamespace, string $i_stDirectory ) : void {
+        $rFiles = scandir( $i_stDirectory );
+        if ( ! is_array( $rFiles ) ) {
+            throw new \RuntimeException( "Cannot read command directory: {$i_stDirectory}" );
+        }
+        $stNamespace = rtrim( $i_stNamespace, '\\' );
+        foreach ( $rFiles as $stFile ) {
+            if ( ! str_ends_with( $stFile, '.php' ) ) {
+                continue;
+            }
+            $stClass = $stNamespace . '\\' . substr( $stFile, 0, -4 );
+            if ( ! class_exists( $stClass ) ) {
+                continue;
+            }
+            $r = new ReflectionClass( $stClass );
+            if ( $r->isAbstract() || $r->isInterface() || $r->isTrait() ) {
+                continue;
+            }
+            if ( ! $r->isSubclassOf( AbstractCommand::class ) ) {
+                continue;
+            }
+            /** @var class-string<AbstractCommand> $stClass */
+            $this->addCommandClass( $stClass );
+        }
+    }
+
+
+    protected function addCommandObject( AbstractCommand $i_cmd ) : void {
+        $this->addCommand( $i_cmd->getCommand(), $i_cmd, $i_cmd->getHelp(), $i_cmd->getUsage() );
+        foreach ( $i_cmd->getAliases() as $stAlias ) {
+            $this->addCommand( $stAlias, $i_cmd, $i_cmd->getHelp(), $i_cmd->getUsage() );
         }
     }
 
