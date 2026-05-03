@@ -16,6 +16,7 @@ use JDWX\Args\BadArgumentException;
 use JDWX\Args\ExtraArgumentsException;
 use JDWX\Args\ParsedString;
 use JDWX\Args\StringParser;
+use JDWX\Strict\OK;
 use JDWX\Strict\TypeIs;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
@@ -275,10 +276,7 @@ class BaseInterpreter extends InteractiveApplication {
      * base classes (e.g., CoreCommand) in the same directory.
      */
     protected function addCommandDirectory( string $i_stNamespace, string $i_stDirectory ) : void {
-        $rFiles = scandir( $i_stDirectory );
-        if ( ! is_array( $rFiles ) ) {
-            throw new \RuntimeException( "Cannot read command directory: {$i_stDirectory}" );
-        }
+        $rFiles = OK::scandir( $i_stDirectory );
         $stNamespace = rtrim( $i_stNamespace, '\\' );
         foreach ( $rFiles as $stFile ) {
             if ( ! str_ends_with( $stFile, '.php' ) ) {
