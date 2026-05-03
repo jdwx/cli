@@ -43,6 +43,11 @@ class MyTestInterpreter extends Interpreter {
     }
 
 
+    public function addCommandDirectoryRelay( string $i_stNamespace, string $i_stDirectory ) : void {
+        parent::addCommandDirectory( $i_stNamespace, $i_stDirectory );
+    }
+
+
     public function addCommandObjectRelay( AbstractCommand $i_cmd ) : void {
         parent::addCommandObject( $i_cmd );
     }
@@ -82,6 +87,11 @@ class MyTestInterpreter extends Interpreter {
             'line_buffer' => $this->lineBuffer,
             'end' => $this->end,
         ];
+    }
+
+
+    protected function readlineRedisplay() : void {
+        // No-op: avoids touching the global readline state during tests.
     }
 
 

@@ -16,8 +16,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 
-require __DIR__ . '/MyTestCommand.php';
-require __DIR__ . '/MyTestInterpreter.php';
+require_once __DIR__ . '/MyTestCommand.php';
+require_once __DIR__ . '/MyTestInterpreter.php';
 
 
 #[CoversClass( AbstractCommand::class )]
