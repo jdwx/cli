@@ -265,7 +265,7 @@ class BaseInterpreter extends InteractiveApplication {
             $this->addCommandObject( $cmd );
             return;
         }
-        throw new \InvalidArgumentException( "Failed to add command: {$cmd}" );
+        throw new \InvalidArgumentException( "Failed to add command class: {$cmd}" );
     }
 
 
@@ -289,6 +289,8 @@ class BaseInterpreter extends InteractiveApplication {
             $cmd = $this->commandFromClassName( $stClass );
             if ( $cmd instanceof AbstractCommand ) {
                 $this->addCommandObject( $cmd );
+            } else {
+                $this->debug( "Skipped {$stFile}: {$cmd}" );
             }
         }
     }
@@ -302,24 +304,28 @@ class BaseInterpreter extends InteractiveApplication {
     }
 
 
-    protected function commandFromClassName( string $stClass ) : AbstractCommand|string {
-        if ( ! class_exists( $stClass ) ) {
-            return "Class {$stClass} does not exist.";
+    /**
+     * @param string $i_stClass The class name to instantiate a command from.
+     * @return AbstractCommand|string The command on success or an error message on failure.
+     */
+    protected function commandFromClassName( string $i_stClass ) : AbstractCommand|string {
+        if ( ! class_exists( $i_stClass ) ) {
+            return "Class {$i_stClass} does not exist.";
         }
-        $r = new ReflectionClass( $stClass );
+        $r = new ReflectionClass( $i_stClass );
         if ( $r->isAbstract() ) {
-            return "Class {$stClass} is abstract.";
+            return "Class {$i_stClass} is abstract.";
         }
         if ( $r->isInterface() ) {
-            return "Class {$stClass} is an interface";
+            return "Class {$i_stClass} is an interface.";
         }
         if ( $r->isTrait() ) {
-            return "Class {$stClass} is a trait";
+            return "Class {$i_stClass} is a trait.";
         }
         if ( ! $r->isSubclassOf( AbstractCommand::class ) ) {
-            return "Class {$stClass} is not a command.";
+            return "Class {$i_stClass} is not a command.";
         }
-        $cmd = new $stClass( $this );
+        $cmd = new $i_stClass( $this );
         assert( $cmd instanceof AbstractCommand );
         return $cmd;
     }
