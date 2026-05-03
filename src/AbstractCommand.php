@@ -81,7 +81,9 @@ abstract class AbstractCommand implements LoggerInterface {
         if ( is_string( static::ALIASES ) ) {
             return [ static::ALIASES ];
         }
+        // @codeCoverageIgnoreStart This is unreachable.
         throw new LogicException( 'ALIASES must be array, string, or null.' );
+        // @codeCoverageIgnoreEnd
     }
 
 
