@@ -260,11 +260,12 @@ class BaseInterpreter extends InteractiveApplication {
      * easiest to provide in the form CommandClassName::class.
      */
     protected function addCommandClass( string $i_stCommandClass ) : void {
-        assert( is_a( $i_stCommandClass, AbstractCommand::class, true ) );
-        $cmd = new $i_stCommandClass( $this );
-        /** @phpstan-ignore-next-line */
-        assert( $cmd instanceof AbstractCommand );
-        $this->addCommandObject( $cmd );
+        $cmd = $this->commandFromClassName( $i_stCommandClass );
+        if ( $cmd instanceof AbstractCommand ) {
+            $this->addCommandObject( $cmd );
+            return;
+        }
+        throw new \InvalidArgumentException( "Failed to add command: {$cmd}" );
     }
 
 
@@ -285,18 +286,10 @@ class BaseInterpreter extends InteractiveApplication {
                 continue;
             }
             $stClass = $stNamespace . '\\' . substr( $stFile, 0, -4 );
-            if ( ! class_exists( $stClass ) ) {
-                continue;
+            $cmd = $this->commandFromClassName( $stClass );
+            if ( $cmd instanceof AbstractCommand ) {
+                $this->addCommandObject( $cmd );
             }
-            $r = new ReflectionClass( $stClass );
-            if ( $r->isAbstract() || $r->isInterface() || $r->isTrait() ) {
-                continue;
-            }
-            if ( ! $r->isSubclassOf( AbstractCommand::class ) ) {
-                continue;
-            }
-            /** @var class-string<AbstractCommand> $stClass */
-            $this->addCommandClass( $stClass );
         }
     }
 
@@ -306,6 +299,29 @@ class BaseInterpreter extends InteractiveApplication {
         foreach ( $i_cmd->getAliases() as $stAlias ) {
             $this->addCommand( $stAlias, $i_cmd, $i_cmd->getHelp(), $i_cmd->getUsage() );
         }
+    }
+
+
+    protected function commandFromClassName( string $stClass ) : AbstractCommand|string {
+        if ( ! class_exists( $stClass ) ) {
+            return "Class {$stClass} does not exist.";
+        }
+        $r = new ReflectionClass( $stClass );
+        if ( $r->isAbstract() ) {
+            return "Class {$stClass} is abstract.";
+        }
+        if ( $r->isInterface() ) {
+            return "Class {$stClass} is an interface";
+        }
+        if ( $r->isTrait() ) {
+            return "Class {$stClass} is a trait";
+        }
+        if ( ! $r->isSubclassOf( AbstractCommand::class ) ) {
+            return "Class {$stClass} is not a command.";
+        }
+        $cmd = new $stClass( $this );
+        assert( $cmd instanceof AbstractCommand );
+        return $cmd;
     }
 
 
