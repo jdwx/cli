@@ -37,8 +37,6 @@ class BaseInterpreter extends InteractiveApplication {
     /** @var array<string, string> */
     protected array $help = [];
 
-    protected string $stPrompt;
-
     /** @var string[]
      * We can't use readline_list_history() because it doesn't work on all
      * systems, so we maintain our own history instead. This also allows
@@ -49,10 +47,12 @@ class BaseInterpreter extends InteractiveApplication {
     protected int $uHistoryLength = 100;
 
 
-    public function __construct( string           $i_stPrompt = '> ', array|Arguments|null $i_argv = null,
+    public function __construct( ?string          $i_nstPrompt = null, array|Arguments|null $i_argv = null,
                                  ?LoggerInterface $i_log = null ) {
         parent::__construct( $i_argv, $i_log );
-        $this->stPrompt = $i_stPrompt;
+        if ( is_string( $i_nstPrompt ) ) {
+            $this->setDefaultPrompt( $i_nstPrompt );
+        }
     }
 
 
@@ -379,7 +379,7 @@ class BaseInterpreter extends InteractiveApplication {
     }
 
 
-    /** An input might be multiline. Sometimes readline does that if you paste multiline content. */
+    /** An input might be multiline. Sometimes `readline()` does that if you paste multiline content. */
     protected function handleInput( string $stInput ) : void {
         foreach ( explode( "\n", $stInput ) as $line ) {
             $line = trim( $line );
@@ -412,15 +412,6 @@ class BaseInterpreter extends InteractiveApplication {
             $this->handleInput( $str );
         }
         return $this->rc;
-    }
-
-
-    /**
-     * @noinspection PhpParameterNameChangedDuringInheritanceInspection
-     * @codeCoverageIgnore Can't be tested non-interactively.
-     */
-    protected function readLine( ?string $i_nstPrompt = null ) : false|string {
-        return parent::readLine( $i_nstPrompt ?? $this->stPrompt );
     }
 
 
