@@ -10,12 +10,18 @@ namespace JDWX\CLI;
 use Exception;
 use JDWX\App\Application;
 use JDWX\App\InteractiveApplication;
-use JDWX\Args\ArgumentException;
 use JDWX\Args\Arguments;
-use JDWX\Args\BadArgumentException;
-use JDWX\Args\ExtraArgumentsException;
-use JDWX\Args\ParsedString;
-use JDWX\Args\StringParser;
+use JDWX\Args\Exceptions\ArgumentException;
+use JDWX\Args\Exceptions\BadArgumentException;
+use JDWX\Args\Exceptions\ExtraArgumentsException;
+use JDWX\Quote\Operators\DelimiterOperator;
+use JDWX\Quote\Operators\Escape\ControlCharEscape;
+use JDWX\Quote\Operators\Escape\HexEscape;
+use JDWX\Quote\Operators\MultiOperator;
+use JDWX\Quote\Operators\QuoteOperator;
+use JDWX\Quote\Operators\RestOfLineOperator;
+use JDWX\Quote\Parser;
+use JDWX\Quote\ParserInterface;
 use JDWX\Strict\OK;
 use JDWX\Strict\TypeIs;
 use Psr\Log\LoggerInterface;
@@ -114,13 +120,11 @@ class BaseInterpreter extends InteractiveApplication {
             $this->error( "No match in history: {$st}" );
         }
 
-        $parsedString = StringParser::parseString( $st );
-        if ( ! $parsedString instanceof ParsedString ) {
-            $this->error( $parsedString );
-            return;
-        }
-
-        if ( ! $this->subst( $parsedString ) ) {
+        $parser = static::makeParser();
+        try {
+            $parsedString = iterator_to_array( $parser( $st ) );
+        } catch ( Exception $ex ) {
+            $this->error( $ex->getMessage() );
             return;
         }
         $this->handleCommandParsedString( $parsedString );
@@ -128,16 +132,16 @@ class BaseInterpreter extends InteractiveApplication {
 
 
     /**
-     * @param string $_stText Unused. Required by the readline completion
-     *                        function signature.
-     * @param int $i_nIndex How far into the text we are.
+     * @param string $_stText  Unused. Required by the readline completion
+     *                         function signature.
+     * @param int    $i_nIndex How far into the text we are.
      * @return string[] The completion options.
      *
      * @noinspection PhpUnusedParameterInspection The _stText parameter
-     * contains only the current word, which is not useful for our multi-word
-     * command completion. The readlineInfo() contains better information
-     * about the full entry so far, so we'll ignore the first parameter and
-     * use that instead.
+     *                         contains only the current word, which is not useful for our multi-word
+     *                         command completion. The readlineInfo() contains better information
+     *                         about the full entry so far, so we'll ignore the first parameter and
+     *                         use that instead.
      */
     public function readlineCompletion( string $_stText, int $i_nIndex ) : array {
         # This prevents readline from ever looking at filenames as an autocomplete option.
@@ -332,50 +336,47 @@ class BaseInterpreter extends InteractiveApplication {
 
 
     /**
-     * @param ParsedString $i_command
+     * @param list<string> $i_rArgs
      * @return void
      *
      * This method handles converting a parsed string into a specific command
      * and its arguments. It then runs the command.
      */
-    protected function handleCommandParsedString( ParsedString $i_command ) : void {
-
-        $args = TypeIs::listString( $i_command->getSegments() );
-        if ( 0 === count( $args ) ) {
+    protected function handleCommandParsedString( array $i_rArgs ) : void {
+        if ( 0 === count( $i_rArgs ) ) {
             # This was a whole-line comment. (Truly empty lines were already handled.)
             return;
         }
-        $st = implode( ' ', $args );
-        $rMatches = CommandMatcher::match( $args, array_keys( $this->commands ) );
+        $stFullCommand = implode( ' ', $i_rArgs );
+        $rMatches = CommandMatcher::match( $i_rArgs, array_keys( $this->commands ) );
         $this->debug( 'matches = ' . json_encode( $rMatches, JSON_THROW_ON_ERROR ) );
         if ( 0 === count( $rMatches ) ) {
-            $this->error( "Unknown command: {$st}" );
+            $this->error( "Unknown command: {$stFullCommand}" );
             return;
         }
         if ( 1 < count( $rMatches ) ) {
-            $rMatches = CommandMatcher::winnow( $args, $rMatches );
+            $rMatches = CommandMatcher::winnow( $i_rArgs, $rMatches );
             $this->debug( 'winnow = ' . json_encode( $rMatches, JSON_THROW_ON_ERROR ) );
             if ( 0 === count( $rMatches ) ) {
                 // @codeCoverageIgnoreStart This *should* be unreachable.
-                $this->error( "Invalid command: {$st}" );
+                $this->error( "Invalid command: {$stFullCommand}" );
                 return;
                 // @codeCoverageIgnoreEnd
             }
             if ( 1 < count( $rMatches ) ) {
-                $this->warning( "Ambiguous command: {$st}" );
+                $this->warning( "Ambiguous command: {$stFullCommand}" );
                 $this->showHelp( $rMatches );
                 return;
             }
         }
         $stCommand = array_shift( $rMatches );
         $uCommandLength = count( explode( ' ', $stCommand ) );
-        $args = array_slice( $args, $uCommandLength );
-        $st = $stCommand . ' ' . $i_command->getOriginal( $uCommandLength );
+        $args = array_slice( $i_rArgs, $uCommandLength );
         if ( [ '?' ] === $args ) {
             $this->showHelp( [ $stCommand ] );
             return;
         }
-        $this->runCommand( $stCommand, TypeIs::listString( $args ), $st );
+        $this->runCommand( $stCommand, TypeIs::listString( $args ), $stFullCommand );
     }
 
 
@@ -415,10 +416,23 @@ class BaseInterpreter extends InteractiveApplication {
     }
 
 
+    protected function makeParser() : ParserInterface {
+        return new Parser(
+            comment: RestOfLineOperator::shComment(),
+            hardQuote: QuoteOperator::single(),
+            softQuote: QuoteOperator::double(),
+            strongCallback: QuoteOperator::backtick(),
+            escape: new MultiOperator( [ new HexEscape(), new ControlCharEscape() ] ),
+            delimiter: DelimiterOperator::whitespace(),
+            fnStrong: $this->substCommand( ... )
+        );
+    }
+
+
     /**
-     * @param string $i_stCommand Which command to execute.
-     * @param list<string> $i_args The arguments to the command.
-     * @param string $i_stOriginal The full command line to be added to history on success.
+     * @param string       $i_stCommand  Which command to execute.
+     * @param list<string> $i_args       The arguments to the command.
+     * @param string       $i_stOriginal The full command line to be added to history on success.
      * @return void
      *
      * Finds the implementation of a given command and runs it with the given arguments.
@@ -450,19 +464,10 @@ class BaseInterpreter extends InteractiveApplication {
     }
 
 
-    /** @return bool Returns true if we should continue processing this input, otherwise false.
-     *
-     * Perform any desired substitutions. In the base implementation, this is just turning
-     * backquoted text into nested commands.  The Interpreter class adds environment variable
-     * substitution.
-     */
-    protected function subst( ParsedString $i_rInput ) : bool {
-        $i_rInput->substBackQuotes( function ( string $i_st ) {
-            ob_start();
-            $this->handleCommand( $i_st );
-            return ob_get_clean();
-        } );
-        return true;
+    protected function substCommand( string $i_stIn ) : string {
+        OK::ob_start();
+        $this->handleCommand( $i_stIn );
+        return trim( OK::ob_get_clean() );
     }
 
 

@@ -8,7 +8,15 @@ namespace JDWX\CLI;
 
 
 use JDWX\Args\Arguments;
-use JDWX\Args\ParsedString;
+use JDWX\Quote\Operators\DelimiterOperator;
+use JDWX\Quote\Operators\Escape\ControlCharEscape;
+use JDWX\Quote\Operators\Escape\HexEscape;
+use JDWX\Quote\Operators\MultiOperator;
+use JDWX\Quote\Operators\OpenEndedOperator;
+use JDWX\Quote\Operators\QuoteOperator;
+use JDWX\Quote\Operators\RestOfLineOperator;
+use JDWX\Quote\Parser;
+use JDWX\Quote\ParserInterface;
 use Psr\Log\LoggerInterface;
 
 
@@ -30,8 +38,14 @@ class Interpreter extends BaseInterpreter {
     }
 
 
-    public function getVariable( string $i_stName ) : string {
-        return $this->rVariables[ $i_stName ];
+    public function getVariable( string $i_stName ) : ?string {
+        return $this->rVariables[ $i_stName ] ?? null;
+    }
+
+
+    /** @noinspection PhpUnused */
+    public function getVariableString( string $i_stName ) : ?string {
+        return $this->rVariables[ $i_stName ] ?? '';
     }
 
 
@@ -40,16 +54,20 @@ class Interpreter extends BaseInterpreter {
     }
 
 
-    protected function subst( ParsedString $i_rInput ) : bool {
-        $bst = $i_rInput->substVariables( $this->rVariables );
-        if ( is_string( $bst ) ) {
-            $this->error( $bst, [
-                'input' => $i_rInput->debug(),
-                'vars' => $this->rVariables,
-            ] );
-            return false;
-        }
-        return parent::subst( $i_rInput );
+    protected function makeParser() : ParserInterface {
+        return new Parser(
+            comment: RestOfLineOperator::shComment(),
+            hardQuote: QuoteOperator::single(),
+            softQuote: QuoteOperator::double(),
+            strongCallback: QuoteOperator::backtick(),
+            weakCallback: QuoteOperator::varCurly(),
+            openCallback: OpenEndedOperator::var(),
+            escape: new MultiOperator( [ new HexEscape(), new ControlCharEscape() ] ),
+            delimiter: DelimiterOperator::whitespace(),
+            fnStrong: $this->substCommand( ... ),
+            fnWeak: $this->getVariableString( ... ),
+            fnOpen: $this->getVariableString( ... )
+        );
     }
 
 

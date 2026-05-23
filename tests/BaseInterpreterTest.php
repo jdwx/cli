@@ -8,8 +8,8 @@ namespace JDWX\CLI\Tests;
 
 
 use JDWX\Args\Arguments;
-use JDWX\Args\BadArgumentException;
-use JDWX\Args\ExtraArgumentsException;
+use JDWX\Args\Exceptions\BadArgumentException;
+use JDWX\Args\Exceptions\ExtraArgumentsException;
 use JDWX\CLI\AbstractCommand;
 use JDWX\CLI\BaseInterpreter;
 use JDWX\Log\BufferLogger;
@@ -201,6 +201,7 @@ final class BaseInterpreterTest extends TestCase {
         $count = count( $log );
         for ( $ii = 0 ; $ii < $count ; $ii++ ) {
             $le = $log->shiftLog();
+            var_dump( $le );
             if ( str_contains( $le->message, 'Unmatched' ) ) {
                 $found = true;
             }

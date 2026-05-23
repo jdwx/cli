@@ -10,7 +10,7 @@
   "require": {
     "php": ">=8.3.0",
     "ext-readline": "*",
-    "jdwx/args": "^1.0",
+    "jdwx/args": "^2.0",
     "jdwx/app": "^1.1.8",
     "jdwx/strict": "^1.0.22",
     "psr/log": "^3.0",
@@ -26,6 +26,6 @@
   "scripts": {
     "phan": "PHAN_ALLOW_XDEBUG=1 php -d xdebug.mode=off vendor/bin/phan --analyze-twice",
     "phpstan": "phpstan",
-    "test": "vendor/bin/phpunit tests"
+    "phpunit": "vendor/bin/phpunit tests"
   }
 }

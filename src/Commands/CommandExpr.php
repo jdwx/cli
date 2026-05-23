@@ -8,7 +8,7 @@ namespace JDWX\CLI\Commands;
 
 
 use JDWX\Args\Arguments;
-use JDWX\Args\BadArgumentException;
+use JDWX\Args\Exceptions\BadArgumentException;
 use JDWX\CLI\Command;
 
 

@@ -8,8 +8,8 @@ namespace JDWX\CLI;
 
 
 use Exception;
-use JDWX\Args\ArgumentException;
 use JDWX\Args\Arguments;
+use JDWX\Args\Exceptions\ArgumentException;
 use LogicException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;
@@ -22,7 +22,7 @@ use Stringable;
  * usage text, and options.  It also provides a method for running the command
  * and supports checking options.
  *
- * If you need to handle arguments in a special way (i.e., with a subclass of
+ * If you need special handling of arguments (i.e., with a subclass of
  * Arguments), you should create an abstract subclass of this with its own abstract
  * run() method with the proper signature.  If not, you can use the Command class
  * instead.
