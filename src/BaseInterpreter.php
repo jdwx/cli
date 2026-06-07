@@ -122,7 +122,7 @@ class BaseInterpreter extends InteractiveApplication {
 
         $parser = static::makeParser();
         try {
-            $parsedString = iterator_to_array( $parser( $st ) );
+            $parsedString = iterator_to_array( $parser( $st ), false );
         } catch ( Exception $ex ) {
             $this->error( $ex->getMessage() );
             return;

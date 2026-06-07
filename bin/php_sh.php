@@ -13,7 +13,7 @@ use JDWX\CLI\Interpreter;
 use JDWX\Log\StderrLogger;
 
 
-( new class( $argv ) extends Interpreter {
+( new class( $argv ?? [] ) extends Interpreter {
 
 
     /** @param list<string> $i_argv */
