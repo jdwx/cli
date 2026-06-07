@@ -7,11 +7,11 @@ declare( strict_types = 1 );
 namespace JDWX\CLI\Tests;
 
 
-use Exception;
 use JDWX\Args\Arguments;
 use JDWX\CLI\AbstractCommand;
 use JDWX\CLI\Interpreter;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 
 require_once __DIR__ . '/MyMultiwordTestCommand.php';
@@ -28,7 +28,7 @@ class MyTestInterpreter extends Interpreter {
 
     public ?int $status = null;
 
-    public ?Exception $ex = null;
+    public ?Throwable $ex = null;
 
     /** @var string[] */
     public array $readLines = [];
@@ -68,7 +68,7 @@ class MyTestInterpreter extends Interpreter {
     }
 
 
-    protected function handleException( Exception $i_ex ) : ?int {
+    protected function handleException( Throwable $i_ex ) : ?int {
         $this->ex = $i_ex;
         return null;
     }
