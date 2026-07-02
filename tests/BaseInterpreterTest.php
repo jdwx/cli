@@ -211,8 +211,7 @@ final class BaseInterpreterTest extends TestCase {
         $count = count( $log );
         for ( $ii = 0 ; $ii < $count ; $ii++ ) {
             $le = $log->shiftLog();
-            var_dump( $le );
-            if ( str_contains( $le->message, 'Unmatched' ) ) {
+            if ( str_contains( $le->message, 'Unclosed quote' ) ) {
                 $found = true;
             }
         }
