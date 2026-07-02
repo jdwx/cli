@@ -28,13 +28,11 @@ class Interpreter extends BaseInterpreter {
 
 
     public function __construct( string           $i_stPrompt = '> ', array|Arguments|null $i_argv = null,
-                                 ?LoggerInterface $i_log = null ) {
+                                 ?LoggerInterface $i_log = null, bool $i_bAddDefaultCommands = true ) {
         parent::__construct( $i_stPrompt, $i_argv, $i_log );
-        $this->addCommandDirectory( 'JDWX\\CLI\\Commands', __DIR__ . '/Commands' );
-        $fn = function ( string $i_stText, int $i_nIndex ) : array {
-            return $this->readlineCompletion( $i_stText, $i_nIndex );
-        };
-        readline_completion_function( $fn );
+        if ( $i_bAddDefaultCommands ) {
+            $this->addCommandDirectory( 'JDWX\\CLI\\Commands', __DIR__ . '/Commands' );
+        }
     }
 
 
