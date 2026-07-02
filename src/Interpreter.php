@@ -27,6 +27,9 @@ class Interpreter extends BaseInterpreter {
     private array $rVariables = [];
 
 
+    private bool $bUndefinedVariableIsError = true;
+
+
     public function __construct( string           $i_stPrompt = '> ', array|Arguments|null $i_argv = null,
                                  ?LoggerInterface $i_log = null, bool $i_bAddDefaultCommands = true ) {
         parent::__construct( $i_stPrompt, $i_argv, $i_log );
@@ -37,13 +40,19 @@ class Interpreter extends BaseInterpreter {
 
 
     public function getVariable( string $i_stName ) : ?string {
-        return $this->rVariables[ $i_stName ] ?? null;
+        if ( ! isset( $this->rVariables[ $i_stName ] ) ) {
+            if ( $this->bUndefinedVariableIsError ) {
+                $this->error( "Undefined variable: $i_stName" );
+                return null;
+            }
+            return '';
+        }
+        return $this->rVariables[ $i_stName ];
     }
 
 
-    /** @noinspection PhpUnused */
     public function getVariableString( string $i_stName ) : ?string {
-        return $this->rVariables[ $i_stName ] ?? '';
+        return $this->getVariable( $i_stName ) ?? '';
     }
 
 
@@ -52,6 +61,7 @@ class Interpreter extends BaseInterpreter {
     }
 
 
+    /** @noinspection PhpMissingParentCallCommonInspection */
     protected function makeParser() : ParserInterface {
         return new Parser(
             comment: RestOfLineOperator::shComment(),
@@ -66,6 +76,11 @@ class Interpreter extends BaseInterpreter {
             fnWeak: $this->getVariableString( ... ),
             fnOpen: $this->getVariableString( ... )
         );
+    }
+
+
+    protected function setUndefinedVariableIsError( bool $i_bValue ) : void {
+        $this->bUndefinedVariableIsError = $i_bValue;
     }
 
 

@@ -117,7 +117,7 @@ final class InterpreterTest extends TestCase {
     }
 
 
-    public function testVariablesError() : void {
+    public function testVariablesForUndefinedError() : void {
         $log = new BufferLogger();
         $cli = new MyTestInterpreter( i_log: $log );
         $cli->readLines = [ 'echo $y' ];
@@ -125,6 +125,16 @@ final class InterpreterTest extends TestCase {
         self::assertCount( 1, $log );
         $log = $log->shiftLog();
         self::assertStringContainsString( 'Undefined', $log->message );
+    }
+
+
+    public function testVariablesForUndefinedOK() : void {
+        $log = new BufferLogger();
+        $cli = new MyTestInterpreter( i_log: $log );
+        $cli->setUndefinedVariableIsErrorRelay( false );
+        $cli->readLines = [ 'echo $y' ];
+        $cli->run();
+        self::assertCount( 0, $log );
     }
 
 
