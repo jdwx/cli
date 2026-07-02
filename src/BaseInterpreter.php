@@ -8,6 +8,7 @@ namespace JDWX\CLI;
 
 
 use Exception;
+use InvalidArgumentException;
 use JDWX\App\Application;
 use JDWX\App\InteractiveApplication;
 use JDWX\Args\Arguments;
@@ -235,11 +236,18 @@ class BaseInterpreter extends InteractiveApplication {
             throw new \InvalidArgumentException( "No command name provided for command '{$stCommand}'" );
         }
 
-        if ( ! is_string( $i_nstUsage ) ) {
+        if ( empty( $i_nstUsage ) ) {
             $i_nstUsage = $i_stCommand;
+        } elseif ( $i_stCommand !== $i_nstUsage && ! str_starts_with( $i_nstUsage, $i_stCommand . ' ' ) ) {
+            # renameCommand() re-keys help entries by rewriting the command
+            # name at the front of the usage string, so a usage that doesn't
+            # begin with the command name would be stranded by a rename.
+            throw new \InvalidArgumentException(
+                "Usage \"{$i_nstUsage}\" for command '{$i_stCommand}' must begin with the command name"
+            );
         }
 
-        if ( ! $i_nstHelp ) {
+        if ( empty( $i_nstHelp ) ) {
             $i_nstHelp = 'No help available.';
         }
 
@@ -301,9 +309,14 @@ class BaseInterpreter extends InteractiveApplication {
 
 
     protected function addCommandObject( AbstractCommand $i_cmd ) : void {
-        $this->addCommand( $i_cmd->getCommand(), $i_cmd, $i_cmd->getHelp(), $i_cmd->getUsage() );
+        $stCommand = $i_cmd->getCommand();
+        $stUsage = $i_cmd->getUsage() ?? $stCommand;
+        $this->addCommand( $stCommand, $i_cmd, $i_cmd->getHelp(), $stUsage );
         foreach ( $i_cmd->getAliases() as $stAlias ) {
-            $this->addCommand( $stAlias, $i_cmd, $i_cmd->getHelp(), $i_cmd->getUsage() );
+            # The usage begins with the primary command name; rewrite it so
+            # the alias's help entry begins with the alias instead.
+            $this->addCommand( $stAlias, $i_cmd, $i_cmd->getHelp(),
+                $stAlias . substr( $stUsage, strlen( $stCommand ) ) );
         }
     }
 
@@ -430,6 +443,47 @@ class BaseInterpreter extends InteractiveApplication {
 
 
     /**
+     * Renames a command, including any subcommands that begin with its name.
+     * E.g., renaming "set" also renames "set output" to preserve the whole
+     * command family. Help entries and the usage reported by the command
+     * object itself follow the rename. Aliases are separate registrations
+     * and must be renamed individually.
+     */
+    protected function renameCommand( string $i_stFrom, string $i_stTo ) : void {
+        $rMap = [];
+        foreach ( array_keys( $this->commands ) as $stCommand ) {
+            $nstNew = self::renameKey( $stCommand, $i_stFrom, $i_stTo );
+            if ( is_string( $nstNew ) ) {
+                $rMap[ $stCommand ] = $nstNew;
+            }
+        }
+        if ( 0 === count( $rMap ) ) {
+            throw new InvalidArgumentException( "Command \"{$i_stFrom}\" does not exist." );
+        }
+        # Check every new name before renaming anything so a collision
+        # partway through the list can't leave the rename half-applied.
+        foreach ( $rMap as $stTo ) {
+            if ( array_key_exists( $stTo, $this->commands ) ) {
+                throw new InvalidArgumentException( "Command \"{$stTo}\" already exists." );
+            }
+        }
+        foreach ( $rMap as $stFrom => $stTo ) {
+            $this->renameCommandInner( $stFrom, $stTo );
+        }
+
+        # Help entries are keyed by usage string, which addCommand() guarantees
+        # begins with the command name, so the same rewrite re-keys them.
+        $rHelp = [];
+        foreach ( $this->help as $stUsage => $stHelp ) {
+            $stUsage = self::renameKey( $stUsage, $i_stFrom, $i_stTo ) ?? $stUsage;
+            assert( ! array_key_exists( $stUsage, $rHelp ) );
+            $rHelp[ $stUsage ] = $stHelp;
+        }
+        $this->help = $rHelp;
+    }
+
+
+    /**
      * @param string       $i_stCommand  Which command to execute.
      * @param list<string> $i_args       The arguments to the command.
      * @param string       $i_stOriginal The full command line to be added to history on success.
@@ -468,6 +522,35 @@ class BaseInterpreter extends InteractiveApplication {
         OK::ob_start();
         $this->handleCommand( $i_stIn );
         return trim( OK::ob_get_clean() );
+    }
+
+
+    private function renameCommandInner( string $i_stFrom, string $i_stTo ) : void {
+        $command = $this->commands[ $i_stFrom ];
+        $this->commands[ $i_stTo ] = $command;
+        unset( $this->commands[ $i_stFrom ] );
+        # Aliases share the command object, so only rename the object when
+        # this registration is under the object's own name. Renaming an alias
+        # must not change the name the object reports for its other
+        # registrations.
+        if ( $command instanceof AbstractCommand && $command->getCommand() === $i_stFrom ) {
+            $command->rename( $i_stTo );
+        }
+    }
+
+
+    /**
+     * @return string|null The renamed key, or null if the key is not
+     *                     $i_stFrom or a subcommand of it.
+     */
+    private static function renameKey( string $i_stKey, string $i_stFrom, string $i_stTo ) : ?string {
+        if ( $i_stKey === $i_stFrom ) {
+            return $i_stTo;
+        }
+        if ( str_starts_with( $i_stKey, $i_stFrom . ' ' ) ) {
+            return $i_stTo . substr( $i_stKey, strlen( $i_stFrom ) );
+        }
+        return null;
     }
 
 

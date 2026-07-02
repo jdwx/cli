@@ -95,4 +95,9 @@ class MyTestInterpreter extends Interpreter {
     }
 
 
+    public function renameCommandRelay( string $i_stFrom, string $i_stTo ) : void {
+        parent::renameCommand( $i_stFrom, $i_stTo );
+    }
+
+
 }

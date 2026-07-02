@@ -7,6 +7,7 @@ declare( strict_types = 1 );
 namespace JDWX\CLI\Tests;
 
 
+use InvalidArgumentException;
 use JDWX\Args\Arguments;
 use JDWX\Args\Exceptions\BadArgumentException;
 use JDWX\Args\Exceptions\ExtraArgumentsException;
@@ -65,7 +66,7 @@ final class BaseInterpreterTest extends TestCase {
     public function testAddCommandForDuplicate() : void {
         $cli = new MyTestInterpreter();
         $cli->addCommandRelay( 'example', 'commandExample' );
-        $this->expectException( \InvalidArgumentException::class );
+        $this->expectException( InvalidArgumentException::class );
         $cli->addCommandRelay( 'example', 'commandExample2' );
     }
 
@@ -81,8 +82,17 @@ final class BaseInterpreterTest extends TestCase {
 
 
         };
-        $this->expectException( \InvalidArgumentException::class );
+        $this->expectException( InvalidArgumentException::class );
         $cli->addCommandRelay( BaseInterpreter::DEFAULT_COMMAND, 'commandExample' );
+    }
+
+
+    public function testAddCommandForUsageNotBeginningWithCommand() : void {
+        # renameCommand() depends on every usage string beginning with its
+        # command name, so addCommand() must reject usage that doesn't.
+        $cli = new MyTestInterpreter();
+        $this->expectException( InvalidArgumentException::class );
+        $cli->addCommandRelay( 'example', 'commandExample', 'Help text.', 'unrelated <usage>' );
     }
 
 
@@ -97,7 +107,7 @@ final class BaseInterpreterTest extends TestCase {
 
         };
 
-        $this->expectException( \InvalidArgumentException::class );
+        $this->expectException( InvalidArgumentException::class );
         $cli->addCommandObjectRelay( $cmd );
     }
 
@@ -263,6 +273,196 @@ final class BaseInterpreterTest extends TestCase {
     }
 
 
+    public function testRenameCommandForAbstractCommand() : void {
+        # The renamed command should dispatch under its new name.
+        $cli = new MyTestInterpreter();
+        $cli->renameCommandRelay( 'set', 'setvar' );
+        $cli->readLines = [ 'setvar x 5' ];
+        ob_start();
+        $cli->run();
+        OK::ob_get_clean();
+        self::assertSame( '5', $cli->getVariable( 'x' ) );
+    }
+
+
+    public function testRenameCommandForAbstractCommandHelp() : void {
+        # The help entry should be findable under the new name and the old
+        # usage string should be gone.
+        $cli = new MyTestInterpreter();
+        $cli->renameCommandRelay( 'set', 'setvar' );
+
+        ob_start();
+        $cli->showHelp( [ 'setvar' ] );
+        $st = OK::ob_get_clean();
+        self::assertStringContainsString( 'setvar <variable> <value...>', $st );
+        self::assertStringContainsString( 'Set a variable.', $st );
+
+        ob_start();
+        $cli->showHelp();
+        $st = OK::ob_get_clean();
+        self::assertStringNotContainsString( 'set <variable>', $st );
+    }
+
+
+    public function testRenameCommandForAbstractCommandUsage() : void {
+        # The usage shown when the command's arguments are wrong should use
+        # the new name.
+        $log = new BufferLogger();
+        $cli = new MyTestInterpreter( i_log: $log );
+        $cli->renameCommandRelay( 'set', 'setvar' );
+        $cli->readLines = [ 'setvar' ];
+        ob_start();
+        $cli->run();
+        $st = OK::ob_get_clean();
+        self::assertStringContainsString( 'Usage: setvar <variable> <value...>', $st );
+    }
+
+
+    public function testRenameCommandForAlias() : void {
+        # Renaming an alias must not affect the primary name or the name the
+        # shared command object reports.
+        $log = new BufferLogger();
+        $cli = new MyTestInterpreter( i_log: $log );
+        $cli->renameCommandRelay( 'quit', 'leave' );
+
+        $cli->readLines = [ 'quit', 'leave', 'echo hello' ];
+        ob_start();
+        $cli->run();
+        $st = OK::ob_get_clean();
+        # The old alias is unknown, the new one exits before the echo runs.
+        self::assertStringNotContainsString( 'hello', $st );
+        $found = false;
+        $count = count( $log );
+        for ( $ii = 0 ; $ii < $count ; $ii++ ) {
+            $le = $log->shiftLog();
+            if ( str_contains( $le->message, 'Unknown command: quit' ) ) {
+                $found = true;
+            }
+        }
+        self::assertTrue( $found );
+
+        # The alias's help entry follows the rename; the primary's does not.
+        ob_start();
+        $cli->showHelp( [ 'leave' ] );
+        $st = OK::ob_get_clean();
+        self::assertStringContainsString( 'Exit the program.', $st );
+        ob_start();
+        $cli->showHelp( [ 'exit' ] );
+        $st = OK::ob_get_clean();
+        self::assertStringContainsString( 'Exit the program.', $st );
+    }
+
+
+    public function testRenameCommandForExistingTarget() : void {
+        $cli = new MyTestInterpreter();
+        $cli->addCommandRelay( 'aaa', 'commandAaa' );
+        $cli->addCommandRelay( 'bbb', 'commandBbb' );
+        $this->expectException( InvalidArgumentException::class );
+        $cli->renameCommandRelay( 'aaa', 'bbb' );
+    }
+
+
+    public function testRenameCommandForMissingCommand() : void {
+        $cli = new MyTestInterpreter();
+        $this->expectException( InvalidArgumentException::class );
+        $cli->renameCommandRelay( 'zzznotacommand', 'whatever' );
+    }
+
+
+    public function testRenameCommandForSubcommandCollision() : void {
+        # If any name in the renamed family collides, nothing should be
+        # renamed, even names earlier in the list that were collision-free.
+        $cli = new class extends MyTestInterpreter {
+
+
+            public function __construct() {
+                parent::__construct();
+                $this->addCommandRelay( 'fam', 'commandFam' );
+                $this->addCommandRelay( 'fam sub', 'commandFamSub' );
+                $this->addCommandRelay( 'group sub', 'commandGroupSub' );
+            }
+
+
+            /** @noinspection PhpUnused */
+            public function commandFam( Arguments $args ) : void {
+                echo "fam-ran\n";
+            }
+
+
+            /** @noinspection PhpUnused */
+            public function commandFamSub( Arguments $args ) : void {
+                echo "fam-sub-ran\n";
+            }
+
+
+            /** @noinspection PhpUnused */
+            public function commandGroupSub( Arguments $args ) : void {
+                echo "group-sub-ran\n";
+            }
+
+
+        };
+        try {
+            $cli->renameCommandRelay( 'fam', 'group' );
+            self::fail( 'Expected InvalidArgumentException.' );
+        } catch ( InvalidArgumentException $ex ) {
+            self::assertStringContainsString( 'group sub', $ex->getMessage() );
+        }
+        $cli->readLines = [ 'fam', 'fam sub' ];
+        ob_start();
+        $cli->run();
+        $st = OK::ob_get_clean();
+        self::assertStringContainsString( 'fam-ran', $st );
+        self::assertStringContainsString( 'fam-sub-ran', $st );
+    }
+
+
+    public function testRenameCommandForSubcommands() : void {
+        $log = new BufferLogger();
+        $cli = new class( '> ', null, $log ) extends MyTestInterpreter {
+
+
+            public function __construct( string           $i_stPrompt = '> ', array|Arguments|null $i_argv = null,
+                                         ?LoggerInterface $i_log = null ) {
+                parent::__construct( $i_stPrompt, $i_argv, $i_log );
+                $this->addCommandRelay( 'fam', 'commandFam' );
+                $this->addCommandRelay( 'fam sub', 'commandFamSub' );
+            }
+
+
+            /** @noinspection PhpUnused */
+            public function commandFam( Arguments $args ) : void {
+                echo "fam-ran\n";
+            }
+
+
+            /** @noinspection PhpUnused */
+            public function commandFamSub( Arguments $args ) : void {
+                echo "fam-sub-ran\n";
+            }
+
+
+        };
+        $cli->renameCommandRelay( 'fam', 'group' );
+        $cli->readLines = [ 'group', 'group sub', 'fam' ];
+        ob_start();
+        $cli->run();
+        $st = OK::ob_get_clean();
+        self::assertStringContainsString( 'fam-ran', $st );
+        self::assertStringContainsString( 'fam-sub-ran', $st );
+        # The old name should no longer be recognized.
+        $found = false;
+        $count = count( $log );
+        for ( $ii = 0 ; $ii < $count ; $ii++ ) {
+            $le = $log->shiftLog();
+            if ( str_contains( $le->message, 'Unknown command: fam' ) ) {
+                $found = true;
+            }
+        }
+        self::assertTrue( $found );
+    }
+
+
     public function testRunCommandForMissingMethod() : void {
         $log = new BufferLogger();
         $cli = new class( '> ', null, $log ) extends MyTestInterpreter {
@@ -373,6 +573,18 @@ final class BaseInterpreterTest extends TestCase {
         $cli->run();
         self::assertInstanceOf( RuntimeException::class, $cli->ex );
         self::assertSame( 'boom', $cli->ex->getMessage() );
+    }
+
+
+    public function testShowHelpForAlias() : void {
+        # An alias gets its own help entry keyed by the alias name, so help
+        # lookup works for the alias, not just the primary command name.
+        $cli = new MyTestInterpreter();
+        ob_start();
+        $cli->showHelp( [ 'quit' ] );
+        $st = OK::ob_get_clean();
+        self::assertStringContainsString( 'quit', $st );
+        self::assertStringContainsString( 'Exit the program.', $st );
     }
 
 
