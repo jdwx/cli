@@ -58,6 +58,9 @@ abstract class AbstractCommand implements LoggerInterface {
     private ?array $nrOptions = null;
 
 
+    private ?string $nstRenamedCommand = null;
+
+
     public function __construct( private readonly Interpreter $cli ) {}
 
 
@@ -88,7 +91,7 @@ abstract class AbstractCommand implements LoggerInterface {
 
 
     public function getCommand() : string {
-        return static::COMMAND;
+        return $this->nstRenamedCommand ?? static::COMMAND;
     }
 
 
@@ -98,11 +101,16 @@ abstract class AbstractCommand implements LoggerInterface {
 
 
     public function getUsage() : ?string {
+        # USAGE is written in terms of the compile-time command name, so peel
+        # that off (if present) and prepend the current name, which may have
+        # been changed by rename().
         $stUsage = static::USAGE ?? '';
-        if ( ! str_starts_with( $stUsage, static::COMMAND ) ) {
-            $stUsage = trim( static::COMMAND . ' ' . $stUsage );
+        if ( static::COMMAND === $stUsage ) {
+            $stUsage = '';
+        } elseif ( str_starts_with( $stUsage, static::COMMAND . ' ' ) ) {
+            $stUsage = substr( $stUsage, strlen( static::COMMAND ) + 1 );
         }
-        return $stUsage;
+        return trim( $this->getCommand() . ' ' . $stUsage );
     }
 
 
@@ -111,12 +119,17 @@ abstract class AbstractCommand implements LoggerInterface {
     }
 
 
+    public function rename( string $i_stNewCommand ) : void {
+        $this->nstRenamedCommand = $i_stNewCommand;
+    }
+
+
     /**
      * @suppress PhanUndeclaredMethod The run() method must exist, but we can't specify the
      * type of its argument. Users will frequently want to use a specific subclass of Arguments.
      */
     public function runOuter( Arguments $args ) : void {
-        assert( method_exists( $this, 'run' ), 'Command ' . static::COMMAND . ' has no run method.' );
+        assert( method_exists( $this, 'run' ), 'Command ' . $this->getCommand() . ' has no run method.' );
         try {
             $this->run( $args );
         } catch ( Exception $ex ) {

@@ -230,6 +230,68 @@ final class CommandTest extends TestCase {
     }
 
 
+    public function testRenameForNoUsage() : void {
+        $cli = new MyTestInterpreter();
+        $cmd = new class( $cli ) extends Command {
+
+
+            protected const string COMMAND = 'foo';
+
+
+            protected function run( Arguments $args ) : void {}
+
+
+        };
+        self::assertSame( 'foo', $cmd->getUsage() );
+        $cmd->rename( 'baz' );
+        self::assertSame( 'baz', $cmd->getCommand() );
+        self::assertSame( 'baz', $cmd->getUsage() );
+    }
+
+
+    public function testRenameForUsageWithCommandPrefix() : void {
+        # USAGE is written in terms of the compile-time command name; after a
+        # rename, getUsage() should report it under the new name.
+        $cli = new MyTestInterpreter();
+        $cmd = new class( $cli ) extends Command {
+
+
+            protected const string COMMAND = 'foo';
+
+            protected const string USAGE   = 'foo <bar>';
+
+
+            protected function run( Arguments $args ) : void {}
+
+
+        };
+        self::assertSame( 'foo <bar>', $cmd->getUsage() );
+        $cmd->rename( 'baz' );
+        self::assertSame( 'baz', $cmd->getCommand() );
+        self::assertSame( 'baz <bar>', $cmd->getUsage() );
+    }
+
+
+    public function testRenameForUsageWithoutCommandPrefix() : void {
+        $cli = new MyTestInterpreter();
+        $cmd = new class( $cli ) extends Command {
+
+
+            protected const string COMMAND = 'foo';
+
+            protected const string USAGE   = '<bar>';
+
+
+            protected function run( Arguments $args ) : void {}
+
+
+        };
+        self::assertSame( 'foo <bar>', $cmd->getUsage() );
+        $cmd->rename( 'baz' );
+        self::assertSame( 'baz <bar>', $cmd->getUsage() );
+    }
+
+
     public function testRun() : void {
         $cli = new MyTestInterpreter();
         $command = new MyTestCommand( $cli );
